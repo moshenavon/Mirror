@@ -34,18 +34,20 @@
 | 21 | 10 אימוג'י תלת-ממדיים מונפשים (Noto Animated, Lottie) + בוחר אימוג'י | ✅ |
 | 22 | אנימציות בכל המערכת (כניסה, ריחוף, מעברים, מצגת, קונפטי) | ✅ |
 | 23 | עדכון בדיקות (unit, קומפוננטות, RLS) | ✅ |
-| 24 | דיפלוי + משתני סביבה | ⬜ |
+| 24 | דיפלוי + משתני סביבה (SESSION_SECRET, NEXT_PUBLIC_SITE_URL הוגדרו; Google + JWT secret ממתינים) | 🧑 |
 
 > שלב 2: הקוד הושלם ונבדק (112 בדיקות). המיגרציה `20261111150000_own_auth_anonymous_public.sql` ממתינה להחלה ב-Supabase.
 
 ## פעולות שנדרשות מהמשתמש (בסוף)
-1. **Google Cloud Console** – יצירת OAuth Client ID (Web application):
-   - Authorized redirect URI: `https://kcpbotofdgdrwvuclwck.supabase.co/auth/v1/callback`
-2. **Supabase → Authentication → Sign In / Providers → Google** – הפעלה והזנת Client ID + Client Secret.
-3. **Supabase → Authentication → URL Configuration**:
-   - Site URL: כתובת ה-production ב-Vercel.
-   - Redirect URLs: `https://<vercel-domain>/auth/callback`, `http://localhost:3000/auth/callback`, ו-`https://*-<team>.vercel.app/auth/callback` ל-previews.
-4. **הרצת בדיקות ההרשאות** – להדביק את `supabase/tests/rls_test.sql` ב-Supabase SQL Editor ולהריץ.
-   התוצאה הצפויה: `ALL RLS TESTS PASSED` (הכל מתגלגל אחורה, שום דבר לא נשמר).
-5. **(אופציונלי) Production branch** – כרגע ה-production ב-Vercel הוא הענף `ccr-54611ef2-h8fn1r`.
-   אם תמזג ל-`main`, לעדכן ב-Vercel → Settings → Git את ה-Production Branch.
+
+1. **מסד הנתונים** – Supabase → SQL Editor → להדביק ולהריץ את
+   `supabase/migrations/20261111150000_own_auth_anonymous_public.sql`.
+   אחר כך להריץ את `supabase/tests/rls_test.sql` → צפוי `ALL RLS TESTS PASSED`.
+2. **Google Cloud Console** → APIs & Services → Credentials → Create OAuth client ID → Web application:
+   - Authorized JavaScript origins: `https://mirror-six-gray.vercel.app`, `http://localhost:3000`
+   - Authorized redirect URIs: `https://mirror-six-gray.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`
+   - OAuth consent screen: שם "Mirror", לוגו, scopes `openid email profile`.
+3. **Supabase** → Project Settings → JWT Keys → להעתיק את ה-Legacy JWT secret.
+4. **Vercel** → mirror → Settings → Environment Variables (Production + Preview, סוג Sensitive):
+   `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SUPABASE_JWT_SECRET` → ואז Redeploy.
+5. **(אופציונלי)** Production Branch ב-Vercel – כרגע `ccr-54611ef2-h8fn1r`; לעדכן אם ממזגים ל-`main`.
