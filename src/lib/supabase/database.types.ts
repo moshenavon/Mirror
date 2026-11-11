@@ -173,6 +173,16 @@ export type Database = {
         Args: { p_description?: string; p_name: string };
         Returns: string;
       };
+      get_achievements: {
+        Args: { p_team_id: string };
+        Returns: {
+          avatar_url: string | null;
+          entry_count: number;
+          full_name: string | null;
+          is_me: boolean;
+          member_email: string;
+        }[];
+      };
       get_insights: {
         Args: { p_from: string; p_team_id: string; p_to: string };
         Returns: {

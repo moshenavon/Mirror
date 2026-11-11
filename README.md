@@ -29,6 +29,7 @@ src/
     teams/new/              # יצירת צוות
     teams/[teamId]/         # מסך דיווח (כפתורים גדולים)
       history/              # הדיווחים שלי – סינון, עריכה, מחיקה
+      achievements/         # מפת הישגים – דרגות לפי כמות דיווחים
       insights/             # מסך תובנות + מצגת רטרו
       settings/             # הגדרות צוות (מנהלים)
     actions/                # Server Actions (teams/entries/fields/members)
