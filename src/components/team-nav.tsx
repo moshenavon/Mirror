@@ -18,6 +18,7 @@ export function TeamNav({ teamId, canViewInsights, isAdmin }: Props) {
     { href: `${base}/history`, label: "הדיווחים שלי", icon: "🗂️" },
     { href: `${base}/achievements`, label: "הישגים", icon: "🏆" },
     ...(canViewInsights ? [{ href: `${base}/insights`, label: "תובנות", icon: "🔍" }] : []),
+    { href: `${base}/action-items`, label: "משימות", icon: "🎯" },
     ...(isAdmin ? [{ href: `${base}/settings`, label: "הגדרות", icon: "⚙️" }] : []),
   ];
 

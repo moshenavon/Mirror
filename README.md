@@ -30,9 +30,10 @@ src/
     teams/[teamId]/         # מסך דיווח (כפתורים גדולים)
       history/              # הדיווחים שלי – סינון, עריכה, מחיקה
       achievements/         # מפת הישגים – דרגות לפי כמות דיווחים
-      insights/             # מסך תובנות + מצגת רטרו
+      insights/             # מסך תובנות + מצגת רטרו (+ יצירת Action Item מתוך תובנה)
+      action-items/         # משימות הצוות שנוצרו מתובנות – סימון "בוצע"
       settings/             # הגדרות צוות (מנהלים)
-    actions/                # Server Actions (teams/entries/fields/members)
+    actions/                # Server Actions (teams/entries/fields/members/action-items)
   components/               # קומפוננטות UI (+ בדיקות *.test.tsx)
   lib/                      # לוגיקה טהורה (+ בדיקות), data layer, supabase clients
   lib/auth/                 # session (jose), Google OAuth

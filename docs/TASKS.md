@@ -56,14 +56,25 @@
 | 36 | 🧑 להחיל את המיגרציה `20261111210000_public_link_join.sql` ב-Supabase | 🧑 |
 | 37 | קובץ מיגרציה מאוחד `supabase/mirror_all_migrations.sql` (נבנה ע"י `scripts/combine-migrations.py`) – בטוח להרצה בכל מצב של מסד הנתונים | ✅ |
 
+## שלב 4 – Action items
+
+| # | משימה | סטטוס |
+|---|-------|:----:|
+| 28 | טבלת `action_items` + RPC (יצירה, רשימה, סימון בוצע, מחיקה) – migration `20261111190000_action_items.sql` | ✅ |
+| 29 | כפתור "יצירת Action Item" בכל שקף במצגת הרטרו + חלון יצירה | ✅ |
+| 30 | מסך משימות: סימון בוצע, ירידה לתחתית, קו חוצה וחיווי ירוק, מחיקה | ✅ |
+| 31 | בדיקות (unit, קומפוננטות, RLS) – כולן עוברות, כולל `rls_test.sql` מול Postgres מקומי | ✅ |
+| 32 | החלת המיגרציה ב-Supabase | 🧑 |
+
 ## פעולות שנדרשות מהמשתמש (בסוף)
 
 1. **מסד הנתונים** – Supabase → SQL Editor → הכי פשוט: להריץ את `supabase/mirror_all_migrations.sql` (כל המיגרציות בקובץ אחד, בטוח גם אם חלקן כבר הוחלו).
-   לחלופין, להדביק ולהריץ את
-   `supabase/migrations/20261111150000_own_auth_anonymous_public.sql`.
-   ואחריה את `supabase/migrations/20261111180000_achievements.sql` (מסך ההישגים).
-   ואחריה את `supabase/migrations/20261111200000_public_link_identity.sql` (קישור ציבורי עם חובת הזדהות).
-   ואחריה את `supabase/migrations/20261111210000_public_link_join.sql` (הצטרפות לצוות דרך הקישור).
+   לחלופין, להדביק ולהריץ לפי הסדר את מה שעוד לא הוחל:
+   `supabase/migrations/20261111150000_own_auth_anonymous_public.sql`,
+   `supabase/migrations/20261111180000_achievements.sql` (מסך ההישגים),
+   `supabase/migrations/20261111190000_action_items.sql` (Action items),
+   `supabase/migrations/20261111200000_public_link_identity.sql` (קישור ציבורי עם חובת הזדהות),
+   `supabase/migrations/20261111210000_public_link_join.sql` (הצטרפות לצוות דרך הקישור).
    אחר כך להריץ את `supabase/tests/rls_test.sql` → צפוי `ALL RLS TESTS PASSED`.
 2. **Google Cloud Console** → APIs & Services → Credentials → Create OAuth client ID → Web application:
    - Authorized JavaScript origins: `https://mirror-six-gray.vercel.app`, `http://localhost:3000`

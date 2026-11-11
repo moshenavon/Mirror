@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getFields, getInsights, getTeamContext } from "@/lib/data";
+import { getActionItems, getFields, getInsights, getTeamContext } from "@/lib/data";
 import { RANGE_PRESETS, presetRange, rangeToInterval, resolveRange } from "@/lib/dates";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { InsightsView } from "@/components/insights/insights-view";
@@ -30,7 +30,11 @@ async function Insights({
   const now = new Date();
   const range = resolveRange({ from: query.from, to: query.to }, now);
   const { fromIso, toIso } = rangeToInterval(range);
-  const [fields, rows] = await Promise.all([getFields(team.id), getInsights(team.id, fromIso, toIso)]);
+  const [fields, rows, actionItems] = await Promise.all([
+    getFields(team.id),
+    getInsights(team.id, fromIso, toIso),
+    getActionItems(team.id),
+  ]);
 
   return (
     <InsightsView
@@ -51,6 +55,7 @@ async function Insights({
         author_email: r.author_email,
         author_avatar_url: r.author_avatar_url,
       }))}
+      actionItems={actionItems}
     />
   );
 }

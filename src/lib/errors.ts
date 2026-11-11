@@ -9,6 +9,8 @@ export function dbErrorMessage(error: DbError, fallback = "אירעה שגיאה
   if (hint === "link_disabled" || message?.includes("Public link is disabled")) return "הקישור הזה כבר לא פעיל";
   if (hint === "join_disabled" || message?.includes("Joining through this link is disabled")) return "ההצטרפות לצוות דרך הקישור הזה לא פעילה";
   if (hint === "identity_required" || message?.includes("Sign-in required")) return "כדי לדווח בקישור הזה צריך להתחבר עם Google";
+  if (hint === "entry_not_found" || message?.includes("Entry not found")) return "הדיווח לא נמצא";
+  if (hint === "action_item_not_found" || message?.includes("Action item not found")) return "המשימה לא נמצאה";
   switch (code) {
     case "23505":
       return "הרשומה כבר קיימת";

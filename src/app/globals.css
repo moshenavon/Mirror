@@ -143,6 +143,21 @@ dialog::backdrop {
   color: var(--on-accent);
 }
 
+/* Strike-through drawn along the middle of every line of the text (RTL: from the start/right).
+   Used for completed action items: <span class="strike" data-done="true">…</span> */
+.strike {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: right 55%;
+  background-size: 0% 2px;
+  transition: background-size 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.strike[data-done="true"] {
+  background-size: 100% 2px;
+}
+
 /* Stagger helper: style={{ "--i": index }} */
 .stagger {
   animation-delay: calc(var(--i, 0) * 60ms);
