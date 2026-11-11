@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { RpcReturn, Tables } from "@/lib/supabase/database.types";
 import { teamPermissions, type TeamPermissions } from "@/lib/permissions";
 import { sortByPosition } from "@/lib/fields";
+import type { ActionItem } from "@/lib/action-items";
 
 export type CurrentUser = SessionUser;
 
@@ -120,4 +121,27 @@ export async function getAchievements(teamId: string): Promise<AchievementRow[]>
     throw new Error(error.message);
   }
   return data ?? [];
+}
+
+/** The team's action items (open first, done last). Insight details are empty for non-viewers. */
+export async function getActionItems(teamId: string): Promise<ActionItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_action_items", { p_team_id: teamId });
+  if (error) {
+    if (error.code === "42501") notFound();
+    throw new Error(error.message);
+  }
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    title: r.title,
+    entryId: r.entry_id,
+    fieldLabel: r.field_label,
+    fieldEmoji: r.field_emoji,
+    sourceContent: r.source_content,
+    createdAt: r.created_at,
+    createdByName: r.created_by_name,
+    doneAt: r.done_at,
+    doneByName: r.done_by_name,
+    canDelete: r.can_delete,
+  }));
 }

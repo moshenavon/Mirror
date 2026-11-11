@@ -7,6 +7,7 @@ export const LIMITS = {
   fieldEmoji: 16,
   fieldPlaceholder: 200,
   entryContent: 2000,
+  actionItemTitle: 300,
 } as const;
 
 const trimmed = (max: number, requiredMessage: string, maxMessage: string) =>
@@ -51,6 +52,12 @@ export const entryContentSchema = trimmed(
   LIMITS.entryContent,
   "אי אפשר לשלוח דיווח ריק",
   `הדיווח יכול להכיל עד ${LIMITS.entryContent} תווים`,
+);
+
+export const actionItemTitleSchema = trimmed(
+  LIMITS.actionItemTitle,
+  "יש לכתוב מה צריך לעשות",
+  `המשימה יכולה להכיל עד ${LIMITS.actionItemTitle} תווים`,
 );
 
 export type TeamInput = z.infer<typeof teamSchema>;

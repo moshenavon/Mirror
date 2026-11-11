@@ -34,6 +34,7 @@ begin
   assert not (select public_submissions_enabled from public.teams where id = v_team), 'public link off by default';
   insert into public.team_members (team_id, email, role) values (v_team, 'bob@example.com', 'member');
   insert into t_ctx values ('token', (select public_token from public.my_teams() where id = v_team));
+  insert into t_ctx values ('field', (select id from public.team_fields where team_id = v_team order by position limit 1)::text);
 end $$;
 
 -- last admin protection
@@ -129,7 +130,8 @@ set local role authenticated;
 do $$
 declare
   v_team uuid := (select v::uuid from t_ctx where k = 'team');
-  v_field uuid := (select id from public.team_fields where team_id = v_team order by position limit 1);
+  -- a real, active field id (the outsider cannot read team_fields herself)
+  v_field uuid := (select v::uuid from t_ctx where k = 'field');
 begin
   assert (select count(*) from public.teams) = 0, 'outsider sees no teams';
   assert (select count(*) from public.team_fields) = 0, 'outsider sees no fields';
@@ -177,6 +179,114 @@ begin
     raise exception 'submitted through disabled link';
   exception when sqlstate 'P0001' then
     if sqlerrm not like '%disabled%' then raise; end if;
+  end;
+end $$;
+
+-- ---------- action items: alice (admin, can view insights) creates ----------
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
+set local role authenticated;
+
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+  v_bob_entry uuid := (select id from public.entries where team_id = v_team and author_id is not null limit 1);
+  v_anon_entry uuid := (select id from public.entries where team_id = v_team and author_id is null limit 1);
+begin
+  insert into t_ctx values ('ai1', public.create_action_item(v_team, v_bob_entry, '  Keep the good vibes  ')::text);
+  insert into t_ctx values ('ai2', public.create_action_item(v_team, v_anon_entry, 'Talk about the secret')::text);
+
+  assert (select count(*) from public.get_action_items(v_team)) = 2, 'admin sees action items';
+  assert (select title from public.get_action_items(v_team) where id = (select v::uuid from t_ctx where k = 'ai1')) = 'Keep the good vibes', 'title trimmed';
+  assert (select source_content from public.get_action_items(v_team) where id = (select v::uuid from t_ctx where k = 'ai1')) = 'Bob is happy', 'source snapshot';
+  assert (select field_label from public.get_action_items(v_team) where id = (select v::uuid from t_ctx where k = 'ai1')) is not null, 'insights viewer sees the source field';
+  assert (select created_by_name from public.get_action_items(v_team) where id = (select v::uuid from t_ctx where k = 'ai1')) = 'Alice Admin', 'creator name';
+
+  begin
+    perform public.create_action_item(v_team, gen_random_uuid(), 'nope');
+    raise exception 'action item for unknown entry';
+  exception when sqlstate 'P0001' then
+    if sqlerrm not like '%Entry not found%' then raise; end if;
+  end;
+  begin
+    perform public.create_action_item(v_team, v_bob_entry, '   ');
+    raise exception 'empty action item accepted';
+  exception when check_violation then null;
+  end;
+  begin
+    perform 1 from public.action_items;
+    raise exception 'direct read of action_items';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+-- ---------- action items: bob (member, no insights) ----------
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
+set local role authenticated;
+
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+  v_ai1 uuid := (select v::uuid from t_ctx where k = 'ai1');
+  v_ai2 uuid := (select v::uuid from t_ctx where k = 'ai2');
+  v_ids uuid[];
+begin
+  assert (select count(*) from public.get_action_items(v_team)) = 2, 'member sees the team action items';
+  assert (select count(*) from public.get_action_items(v_team)
+          where source_content is null and field_label is null and entry_id is null) = 2, 'member does not see the source insight';
+  begin
+    perform public.create_action_item(v_team, gen_random_uuid(), 'nope');
+    raise exception 'member created action item';
+  exception when insufficient_privilege then null;
+  end;
+
+  perform public.set_action_item_done(v_ai1, true);
+  assert (select done_at is not null and done_by_name = 'Bob Member' from public.get_action_items(v_team) where id = v_ai1), 'member marks done';
+  select array_agg(id) into v_ids from public.get_action_items(v_team);
+  assert v_ids = array[v_ai2, v_ai1], 'done items are listed last';
+
+  perform public.set_action_item_done(v_ai1, false);
+  assert (select done_at is null and done_by_name is null from public.get_action_items(v_team) where id = v_ai1), 'member re-opens';
+  perform public.set_action_item_done(v_ai1, true);
+
+  assert not (select can_delete from public.get_action_items(v_team) where id = v_ai2), 'member cannot delete others items';
+  begin
+    perform public.delete_action_item(v_ai2);
+    raise exception 'member deleted someone elses action item';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.action_items set title = 'hacked';
+    raise exception 'direct update of action_items';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+-- ---------- action items: carol (outsider) ----------
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}', true);
+set local role authenticated;
+
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+  v_ai1 uuid := (select v::uuid from t_ctx where k = 'ai1');
+begin
+  begin
+    perform public.get_action_items(v_team);
+    raise exception 'outsider read action items';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.set_action_item_done(v_ai1, false);
+    raise exception 'outsider changed action item';
+  exception when sqlstate 'P0001' then null;
+  end;
+  begin
+    perform public.delete_action_item(v_ai1);
+    raise exception 'outsider deleted action item';
+  exception when sqlstate 'P0001' then null;
   end;
 end $$;
 
@@ -300,6 +410,11 @@ begin
   end;
   delete from public.entries where id = v_entry;
   assert (select count(*) from public.entries where id = v_entry) = 0, 'delete own entry';
+  assert (select count(*) from public.get_action_items(v_team)
+          where entry_id is null and source_content = 'Bob is happy' and done_at is not null) = 1, 'action item survives its entry';
+  assert (select bool_and(can_delete) from public.get_action_items(v_team)), 'admin may delete any action item';
+  perform public.delete_action_item((select v::uuid from t_ctx where k = 'ai2'));
+  assert (select count(*) from public.get_action_items(v_team)) = 1, 'admin deleted an action item';
 
   delete from public.teams where id = v_team;
   assert (select count(*) from public.my_teams()) = 0, 'team deleted (cascade)';

@@ -24,6 +24,11 @@ import { finale } from "@/lib/confetti";
 import { Avatar } from "@/components/avatar";
 import { Emoji } from "@/components/emoji";
 import { buttonClass } from "@/components/ui";
+import { isDone, type ActionItem } from "@/lib/action-items";
+import { ActionItemDialog } from "@/components/action-items/action-item-dialog";
+
+type Result = { ok: true } | { ok: false; error: string };
+type LinkedItem = Pick<ActionItem, "id" | "title" | "doneAt">;
 
 type Props = {
   title: string;
@@ -33,6 +38,10 @@ type Props = {
   /** Slide index (in field order) to start at; null shows the intro screen, where the order is chosen. */
   startAt: number | null;
   onClose: () => void;
+  /** Action items already created, by source entry id. */
+  actionItemsByEntry?: Map<string, LinkedItem[]>;
+  /** When given, every slide offers "create action item". */
+  onCreateActionItem?: (entryId: string, title: string) => Promise<Result>;
 };
 
 const ORDERS: { id: PresentationOrder; label: string; icon: string; hint: string }[] = [
@@ -51,7 +60,16 @@ function stateKey(state: PresenterState): string {
   }
 }
 
-export function Presenter({ title, subtitle, fields, entries, startAt, onClose }: Props) {
+export function Presenter({
+  title,
+  subtitle,
+  fields,
+  entries,
+  startAt,
+  onClose,
+  actionItemsByEntry,
+  onCreateActionItem,
+}: Props) {
   const [order, setOrder] = useState<PresentationOrder>("fields");
   const sections = useMemo(() => buildSections(fields, entries, order), [fields, entries, order]);
   const slides = useMemo(() => flattenSlides(sections), [sections]);
@@ -62,6 +80,14 @@ export function Presenter({ title, subtitle, fields, entries, startAt, onClose }
   // +1 = forward, -1 = backward (drives the slide direction)
   const [direction, setDirection] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [creatingFor, setCreatingFor] = useState<Slide | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const next = useCallback(() => {
     setDirection(1);
@@ -89,6 +115,10 @@ export function Presenter({ title, subtitle, fields, entries, startAt, onClose }
     function onKey(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       if (target?.tagName === "SELECT" || target?.closest?.('[role="radiogroup"]')) return;
+      // typing inside the action-item dialog must not move the slides
+      if (target?.closest?.("dialog")) return;
+      // Enter / Space on a focused button activate that button
+      if (target?.tagName === "BUTTON" && (event.key === "Enter" || event.key === " ")) return;
       // RTL: "forward" is to the left.
       if (["ArrowLeft", "PageDown", " ", "Enter"].includes(event.key)) {
         event.preventDefault();
@@ -281,7 +311,13 @@ export function Presenter({ title, subtitle, fields, entries, startAt, onClose }
                 </div>
               )}
 
-              {state.kind === "slide" && <SlideView slide={slides[state.index]} />}
+              {state.kind === "slide" && (
+                <SlideView
+                  slide={slides[state.index]}
+                  linkedItems={actionItemsByEntry?.get(slides[state.index].entry.entry_id) ?? []}
+                  onCreateActionItem={onCreateActionItem ? () => setCreatingFor(slides[state.index]) : undefined}
+                />
+              )}
 
               {state.kind === "transition" && (
                 <TransitionView from={sections[state.fromSection]} next={sections[state.fromSection + 1]} />
@@ -300,6 +336,48 @@ export function Presenter({ title, subtitle, fields, entries, startAt, onClose }
             </motion.div>
           </AnimatePresence>
         </div>
+      </div>
+
+      {creatingFor && onCreateActionItem && (
+        <ActionItemDialog
+          key={creatingFor.entry.entry_id}
+          source={{
+            fieldEmoji: creatingFor.field.emoji,
+            fieldLabel: creatingFor.field.label,
+            authorName: displayName(creatingFor.entry),
+            content: creatingFor.entry.content,
+          }}
+          onClose={() => {
+            setCreatingFor(null);
+            containerRef.current?.focus();
+          }}
+          onSubmit={async (itemTitle) => {
+            const result = await onCreateActionItem(creatingFor.entry.entry_id, itemTitle);
+            if (result.ok) {
+              setCreatingFor(null);
+              setToast("המשימה נוספה לרשימת המשימות של הצוות");
+              containerRef.current?.focus();
+            }
+            return result;
+          }}
+        />
+      )}
+
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4">
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              key={toast}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.95 }}
+              className="flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 font-semibold text-on-primary shadow-2xl"
+            >
+              <span aria-hidden>✅</span>
+              {toast}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* bottom controls */}
@@ -415,7 +493,15 @@ function useFitText(boxRef: React.RefObject<HTMLElement | null>, textRef: React.
   }, [boxRef, textRef, content]);
 }
 
-function SlideView({ slide }: { slide: Slide }) {
+function SlideView({
+  slide,
+  linkedItems,
+  onCreateActionItem,
+}: {
+  slide: Slide;
+  linkedItems: LinkedItem[];
+  onCreateActionItem?: () => void;
+}) {
   const name = displayName(slide.entry);
   const anonymous = slide.entry.is_anonymous;
   const boxRef = useRef<HTMLDivElement>(null);
@@ -467,6 +553,38 @@ function SlideView({ slide }: { slide: Slide }) {
           {slide.entry.content}
         </motion.blockquote>
       </div>
+
+      {(onCreateActionItem || linkedItems.length > 0) && (
+        <motion.footer
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.26 }}
+          className="mt-4 flex shrink-0 flex-wrap items-center justify-center gap-2"
+        >
+          {linkedItems.length > 0 && (
+            <ul aria-label="משימות מהתובנה הזו" className="flex flex-wrap justify-center gap-2">
+              {linkedItems.map((item) => (
+                <li
+                  key={item.id}
+                  className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1 text-sm ${
+                    isDone(item) ? "border-success/40 bg-success-soft text-success" : "border-border bg-surface"
+                  }`}
+                >
+                  <span aria-hidden>{isDone(item) ? "✅" : "🎯"}</span>
+                  <span className={`truncate ${isDone(item) ? "line-through decoration-2" : ""}`}>{item.title}</span>
+                  {isDone(item) && <span className="sr-only">(בוצע)</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {onCreateActionItem && (
+            <button type="button" onClick={onCreateActionItem} className={buttonClass("secondary", "md", "group")}>
+              <span aria-hidden className="transition group-hover:scale-125">🎯</span>
+              יצירת Action Item
+            </button>
+          )}
+        </motion.footer>
+      )}
     </article>
   );
 }
