@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { buildSections, countByField, sectionStarts, type InsightEntry, type InsightField } from "@/lib/insights";
+import { buildSections, countByField, entriesLabel, sectionStarts, type InsightEntry, type InsightField } from "@/lib/insights";
 import { formatDateString, type DateRange } from "@/lib/dates";
 import { buttonClass, cardClass, inputClass } from "@/components/ui";
 import { Presenter } from "./presenter";
@@ -72,7 +72,7 @@ export function InsightsView({ teamId, teamName, range, presets, fields, entries
               סיכום
             </h2>
             <p className="text-sm text-muted">
-              {rangeLabel} · {entries.length} דיווחים
+              {rangeLabel} · {entriesLabel(entries.length)}
             </p>
           </div>
           <button

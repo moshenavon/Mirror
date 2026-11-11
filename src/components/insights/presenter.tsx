@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   displayName,
+  entriesLabel,
   flattenSlides,
   nextState,
   prevState,
@@ -168,7 +169,7 @@ export function Presenter({ title, subtitle, sections, startAt, onClose }: Props
                     {sections[state.fromSection + 1].field.emoji}
                   </div>
                   <h2 className="mt-4 text-4xl font-bold">{sections[state.fromSection + 1].field.label}</h2>
-                  <p className="mt-2 text-muted">{sections[state.fromSection + 1].entries.length} דיווחים</p>
+                  <p className="mt-2 text-muted">{entriesLabel(sections[state.fromSection + 1].entries.length)}</p>
                 </>
               )}
             </div>
@@ -180,7 +181,7 @@ export function Presenter({ title, subtitle, sections, startAt, onClose }: Props
                 🎉
               </div>
               <h2 className="mt-4 text-4xl font-bold">סיימנו את הרטרו!</h2>
-              <p className="mt-2 text-xl text-muted">עברנו על {slides.length} דיווחים. כל הכבוד לצוות.</p>
+              <p className="mt-2 text-xl text-muted">עברנו על {entriesLabel(slides.length)}. כל הכבוד לצוות.</p>
               <button type="button" onClick={onClose} className={buttonClass("primary", "lg", "mt-8")}>
                 סגירה
               </button>

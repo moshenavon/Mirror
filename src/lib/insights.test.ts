@@ -125,3 +125,12 @@ describe("presenter state machine", () => {
     expect(prevState({ kind: "done" }, [])).toEqual({ kind: "intro" });
   });
 });
+
+describe("entriesLabel", () => {
+  it("uses Hebrew singular and plural forms", async () => {
+    const { entriesLabel } = await import("./insights");
+    expect(entriesLabel(1)).toBe("דיווח אחד");
+    expect(entriesLabel(0)).toBe("0 דיווחים");
+    expect(entriesLabel(5)).toBe("5 דיווחים");
+  });
+});

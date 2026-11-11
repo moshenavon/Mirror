@@ -157,3 +157,8 @@ export function prevState(state: PresenterState, slides: Slide[]): PresenterStat
       return { kind: "slide", index: slides.length - 1 };
   }
 }
+
+/** "דיווח אחד" / "3 דיווחים" */
+export function entriesLabel(count: number): string {
+  return count === 1 ? "דיווח אחד" : `${count} דיווחים`;
+}
