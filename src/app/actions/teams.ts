@@ -92,6 +92,20 @@ export async function setPublicSubmissions(teamId: string, enabled: boolean): Pr
   return ok();
 }
 
+export async function setPublicRequiresIdentity(teamId: string, required: boolean): Promise<ActionResult> {
+  if (!uuidSchema.safeParse(teamId).success) return fail("צוות לא תקין");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("teams")
+    .update({ public_requires_identity: Boolean(required) })
+    .eq("id", teamId)
+    .select("id");
+  if (error) return fail(dbErrorMessage(error));
+  if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
+  refresh();
+  return ok();
+}
+
 export async function regeneratePublicLink(teamId: string): Promise<ActionResult<{ token: string }>> {
   if (!uuidSchema.safeParse(teamId).success) return fail("צוות לא תקין");
   const supabase = await createClient();

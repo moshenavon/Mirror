@@ -48,6 +48,7 @@ vi.mock("@/app/actions/teams", () => ({
   setInsightsVisibility: vi.fn(async () => ({ ok: true })),
   deleteTeam: vi.fn(async () => ({ ok: true })),
   setPublicSubmissions: vi.fn(async () => ({ ok: true })),
+  setPublicRequiresIdentity: vi.fn(async () => ({ ok: true })),
   regeneratePublicLink: vi.fn(async () => ({ ok: true, data: { token: "f".repeat(64) } })),
 }));
 vi.mock("@/app/actions/public-entries", () => ({

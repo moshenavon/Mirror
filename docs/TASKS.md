@@ -45,12 +45,15 @@
 | 25 | מסך הישגים: מפת דרגות אנכית (0/10/20/50/100), תמונות המשתתפים לפי כמות דיווחים, כרטיס "הדרגה שלי", חגיגת עליית דרגה | ✅ |
 | 26 | RPC `get_achievements` + בדיקות RLS + בדיקות unit וקומפוננטות | ✅ |
 | 27 | 🧑 להחיל את המיגרציה `20261111180000_achievements.sql` ב-Supabase | 🧑 |
+| 28 | קישור ציבורי עם חובת הזדהות: המנהל בוחר אנונימי / חובה להזדהות; בחובת הזדהות הדיווח נשמר בשם השולח | ✅ |
+| 29 | 🧑 להחיל את המיגרציה `20261111200000_public_link_identity.sql` ב-Supabase | 🧑 |
 
 ## פעולות שנדרשות מהמשתמש (בסוף)
 
 1. **מסד הנתונים** – Supabase → SQL Editor → להדביק ולהריץ את
    `supabase/migrations/20261111150000_own_auth_anonymous_public.sql`.
    ואחריה את `supabase/migrations/20261111180000_achievements.sql` (מסך ההישגים).
+   ואחריה את `supabase/migrations/20261111200000_public_link_identity.sql` (קישור ציבורי עם חובת הזדהות).
    אחר כך להריץ את `supabase/tests/rls_test.sql` → צפוי `ALL RLS TESTS PASSED`.
 2. **Google Cloud Console** → APIs & Services → Credentials → Create OAuth client ID → Web application:
    - Authorized JavaScript origins: `https://mirror-six-gray.vercel.app`, `http://localhost:3000`

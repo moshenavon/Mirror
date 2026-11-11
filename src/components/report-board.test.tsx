@@ -71,6 +71,19 @@ describe("ReportBoard", () => {
     await waitFor(() => expect(submit).toHaveBeenCalledWith("f1", "טוב", true));
   });
 
+  it("is never anonymous on an identified public link", async () => {
+    const user = userEvent.setup();
+    const submit = okSubmit();
+    render(<ReportBoard fields={fields} onSubmit={submit} anonymity="never" />);
+    await user.click(screen.getByRole("button", { name: /ממה אני שמח/ }));
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.getByText(/יישלח בשמך/)).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox"), "טוב");
+    await user.click(screen.getByRole("button", { name: /שליחה/ }));
+    await waitFor(() => expect(submit).toHaveBeenCalledWith("f1", "טוב", false));
+    expect(await screen.findByText("הדיווח נשלח, תודה!")).toBeInTheDocument();
+  });
+
   it("keeps the dialog open and shows the server error", async () => {
     const user = userEvent.setup();
     const submit = vi.fn(async () => ({ ok: false as const, error: "השדה הזה כבר לא פעיל" }));

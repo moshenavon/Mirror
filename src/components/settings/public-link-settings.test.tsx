@@ -5,27 +5,60 @@ import { PublicLinkSettings } from "./public-link-settings";
 
 const TOKEN = "a".repeat(64);
 
-function setup(enabled = false) {
+function setup(enabled = false, requiresIdentity = false) {
   const actions = {
     setEnabled: vi.fn(async () => ({ ok: true as const })),
+    setRequiresIdentity: vi.fn(async () => ({ ok: true as const })),
     regenerate: vi.fn(async () => ({ ok: true as const, data: { token: "b".repeat(64) } })),
   };
-  render(<PublicLinkSettings teamId="t1" enabled={enabled} token={TOKEN} origin="https://mirror.app" actions={actions} />);
+  render(
+    <PublicLinkSettings
+      teamId="t1"
+      enabled={enabled}
+      requiresIdentity={requiresIdentity}
+      token={TOKEN}
+      origin="https://mirror.app"
+      actions={actions}
+    />,
+  );
   return { actions, user: userEvent.setup() };
 }
 
 describe("PublicLinkSettings", () => {
   it("is off by default and hides the link", () => {
     setup();
-    expect(screen.getByRole("switch", { name: /מילוי ללא הזדהות/ })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: /שיתוף ציבורי/ })).not.toBeChecked();
     expect(screen.queryByRole("textbox", { name: /קישור ציבורי/ })).not.toBeInTheDocument();
   });
 
   it("enables the link and shows the URL", async () => {
     const { user, actions } = setup();
-    await user.click(screen.getByRole("switch", { name: /מילוי ללא הזדהות/ }));
+    await user.click(screen.getByRole("switch", { name: /שיתוף ציבורי/ }));
     await waitFor(() => expect(actions.setEnabled).toHaveBeenCalledWith("t1", true));
     expect(screen.getByRole("textbox", { name: /קישור ציבורי/ })).toHaveValue(`https://mirror.app/r/${TOKEN}`);
+  });
+
+  it("is anonymous by default and can require identification", async () => {
+    const { user, actions } = setup(true);
+    expect(screen.getByRole("radio", { name: /אנונימי/ })).toBeChecked();
+    await user.click(screen.getByRole("radio", { name: /חובה להזדהות/ }));
+    await waitFor(() => expect(actions.setRequiresIdentity).toHaveBeenCalledWith("t1", true));
+    expect(screen.getByRole("radio", { name: /חובה להזדהות/ })).toBeChecked();
+  });
+
+  it("switches back to anonymous", async () => {
+    const { user, actions } = setup(true, true);
+    expect(screen.getByRole("radio", { name: /חובה להזדהות/ })).toBeChecked();
+    await user.click(screen.getByRole("radio", { name: /אנונימי/ }));
+    await waitFor(() => expect(actions.setRequiresIdentity).toHaveBeenCalledWith("t1", false));
+  });
+
+  it("reverts the mode when saving fails", async () => {
+    const { user, actions } = setup(true);
+    actions.setRequiresIdentity.mockResolvedValueOnce({ ok: false, error: "אין הרשאה" } as never);
+    await user.click(screen.getByRole("radio", { name: /חובה להזדהות/ }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("אין הרשאה");
+    expect(screen.getByRole("radio", { name: /אנונימי/ })).toBeChecked();
   });
 
   it("copies the link", async () => {
@@ -48,8 +81,8 @@ describe("PublicLinkSettings", () => {
   it("reverts the switch when saving fails", async () => {
     const { user, actions } = setup();
     actions.setEnabled.mockResolvedValueOnce({ ok: false, error: "אין הרשאה" } as never);
-    await user.click(screen.getByRole("switch", { name: /מילוי ללא הזדהות/ }));
+    await user.click(screen.getByRole("switch", { name: /שיתוף ציבורי/ }));
     expect(await screen.findByRole("alert")).toHaveTextContent("אין הרשאה");
-    expect(screen.getByRole("switch", { name: /מילוי ללא הזדהות/ })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: /שיתוף ציבורי/ })).not.toBeChecked();
   });
 });

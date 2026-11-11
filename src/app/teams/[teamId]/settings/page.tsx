@@ -99,6 +99,7 @@ async function Settings({
         <PublicLinkSettings
           teamId={team.id}
           enabled={team.public_submissions_enabled}
+          requiresIdentity={team.public_requires_identity}
           token={team.public_token ?? ""}
           origin={origin}
         />

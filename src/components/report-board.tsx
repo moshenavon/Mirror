@@ -19,9 +19,15 @@ type Result = { ok: true } | { ok: false; error: string };
 type Props = {
   fields: ReportField[];
   onSubmit: (fieldId: string, content: string, anonymous: boolean) => Promise<Result>;
-  /** "optional": the sender may tick "anonymous"; "always": public link – every entry is anonymous. */
-  anonymity?: "optional" | "always";
+  /**
+   * "optional": the sender may tick "anonymous";
+   * "always": anonymous public link – every entry is anonymous;
+   * "never": identified public link – every entry is stored under the sender's name.
+   */
+  anonymity?: Anonymity;
 };
+
+type Anonymity = "optional" | "always" | "never";
 
 export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props) {
   const [active, setActive] = useState<ReportField | null>(null);
@@ -110,7 +116,7 @@ export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props)
 
 type DialogProps = {
   field: ReportField;
-  anonymity: "optional" | "always";
+  anonymity: Anonymity;
   onClose: () => void;
   onSubmit: (content: string, anonymous: boolean) => Promise<Result>;
 };
@@ -218,8 +224,10 @@ export function EntryDialog({ field, anonymity, onClose, onSubmit }: DialogProps
               </AnimatePresence>
             </span>
           </label>
-        ) : (
+        ) : anonymity === "always" ? (
           <p className="mt-3 rounded-2xl bg-primary-soft p-3 text-sm">🎭 הדיווח יישלח באופן אנונימי לחלוטין.</p>
+        ) : (
+          <p className="mt-3 rounded-2xl bg-primary-soft p-3 text-sm">🪪 הדיווח יישלח בשמך.</p>
         )}
 
         <AnimatePresence>

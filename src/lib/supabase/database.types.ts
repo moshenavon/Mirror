@@ -155,6 +155,7 @@ export type Database = {
           insights_visibility: InsightsVisibility;
           name: string;
           public_submissions_enabled: boolean;
+          public_requires_identity: boolean;
           updated_at: string;
         };
         Insert: never;
@@ -163,6 +164,7 @@ export type Database = {
           insights_visibility?: InsightsVisibility;
           name?: string;
           public_submissions_enabled?: boolean;
+          public_requires_identity?: boolean;
         };
         Relationships: [];
       };
@@ -208,6 +210,7 @@ export type Database = {
           insights_visibility: InsightsVisibility;
           name: string;
           public_submissions_enabled: boolean;
+          public_requires_identity: boolean;
           public_token: string | null;
           role: TeamRole;
         }[];

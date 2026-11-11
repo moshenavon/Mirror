@@ -2,27 +2,57 @@
 
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { regeneratePublicLink, setPublicSubmissions } from "@/app/actions/teams";
+import { regeneratePublicLink, setPublicRequiresIdentity, setPublicSubmissions } from "@/app/actions/teams";
 import { buttonClass, inputClass } from "@/components/ui";
 
 export type PublicLinkActions = {
   setEnabled: typeof setPublicSubmissions;
+  setRequiresIdentity: typeof setPublicRequiresIdentity;
   regenerate: typeof regeneratePublicLink;
 };
 
-const defaultActions: PublicLinkActions = { setEnabled: setPublicSubmissions, regenerate: regeneratePublicLink };
+const defaultActions: PublicLinkActions = {
+  setEnabled: setPublicSubmissions,
+  setRequiresIdentity: setPublicRequiresIdentity,
+  regenerate: regeneratePublicLink,
+};
+
+const MODES = [
+  {
+    value: false,
+    emoji: "🎭",
+    title: "אנונימי – בלי הזדהות",
+    description: "כל מי שמחזיק בקישור יכול לשלוח, בלי להתחבר. הדיווח נשמר בלי שום שיוך לשולח.",
+  },
+  {
+    value: true,
+    emoji: "🪪",
+    title: "חובה להזדהות",
+    description: "הקישור פתוח לכולם, אבל כדי לשלוח צריך להתחבר עם Google. הדיווח נשמר בשם השולח.",
+  },
+] as const;
 
 type Props = {
   teamId: string;
   enabled: boolean;
+  /** Senders must sign in with Google; their entries are stored under their name. */
+  requiresIdentity?: boolean;
   token: string;
   /** Origin used to build the shareable URL (e.g. https://mirror.example.com). */
   origin: string;
   actions?: PublicLinkActions;
 };
 
-export function PublicLinkSettings({ teamId, enabled, token, origin, actions = defaultActions }: Props) {
+export function PublicLinkSettings({
+  teamId,
+  enabled,
+  requiresIdentity = false,
+  token,
+  origin,
+  actions = defaultActions,
+}: Props) {
   const [isEnabled, setIsEnabled] = useState(enabled);
+  const [identity, setIdentity] = useState(requiresIdentity);
   const [currentToken, setCurrentToken] = useState(token);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +67,20 @@ export function PublicLinkSettings({ teamId, enabled, token, origin, actions = d
       const result = await actions.setEnabled(teamId, next);
       if (!result.ok) {
         setIsEnabled(previous);
+        setError(result.error);
+      }
+    });
+  }
+
+  function changeMode(next: boolean) {
+    if (next === identity) return;
+    const previous = identity;
+    setIdentity(next);
+    setError(null);
+    startTransition(async () => {
+      const result = await actions.setRequiresIdentity(teamId, next);
+      if (!result.ok) {
+        setIdentity(previous);
         setError(result.error);
       }
     });
@@ -84,9 +128,9 @@ export function PublicLinkSettings({ teamId, enabled, token, origin, actions = d
           />
         </span>
         <span>
-          <span className="block font-semibold">מילוי ללא הזדהות</span>
+          <span className="block font-semibold">שיתוף ציבורי</span>
           <span className="block text-sm text-muted">
-            כל מי שמחזיק בקישור יוכל לשלוח דיווחים – תמיד באופן אנונימי, בלי להתחבר.
+            כל מי שמחזיק בקישור יוכל לשלוח דיווחים – גם מי שאינו חבר בצוות.
           </span>
         </span>
       </label>
@@ -100,6 +144,33 @@ export function PublicLinkSettings({ teamId, enabled, token, origin, actions = d
             className="overflow-hidden"
           >
             <div className="space-y-3 rounded-2xl border border-accent/60 bg-primary-soft p-4">
+              <fieldset disabled={pending}>
+                <legend className="mb-2 font-semibold">איך מדווחים בקישור?</legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {MODES.map((mode) => (
+                    <label
+                      key={String(mode.value)}
+                      className={`flex cursor-pointer gap-3 rounded-xl border-2 bg-surface p-3 transition ${
+                        identity === mode.value ? "border-primary" : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={`public-mode-${teamId}`}
+                        checked={identity === mode.value}
+                        onChange={() => changeMode(mode.value)}
+                        className="mt-1 accent-[var(--primary)]"
+                      />
+                      <span>
+                        <span className="block font-semibold">
+                          {mode.emoji} {mode.title}
+                        </span>
+                        <span className="block text-sm text-muted">{mode.description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   readOnly
