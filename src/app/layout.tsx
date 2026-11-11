@@ -55,16 +55,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="flex flex-1 flex-col">{children}</div>
         </MotionProvider>
         <footer className="py-6 text-center text-xs text-muted">
-          אימוג&apos;י מונפשים:{" "}
-          <a
-            href="https://googlefonts.github.io/noto-emoji-animation/"
-            className="underline-offset-2 hover:underline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Noto Emoji Animation
-          </a>{" "}
-          (CC BY 4.0)
+          <Link href="/credits" className="underline-offset-2 hover:underline">
+            קרדיטים
+          </Link>
         </footer>
       </body>
     </html>

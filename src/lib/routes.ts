@@ -1,5 +1,5 @@
 /** Paths reachable without signing in. */
-const PUBLIC_PREFIXES = ["/login", "/auth/", "/r/"];
+const PUBLIC_PREFIXES = ["/login", "/auth/", "/r/", "/credits"];
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((prefix) =>
