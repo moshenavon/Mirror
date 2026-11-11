@@ -50,6 +50,11 @@ vi.mock("@/app/actions/teams", () => ({
   setPublicSubmissions: vi.fn(async () => ({ ok: true })),
   regeneratePublicLink: vi.fn(async () => ({ ok: true, data: { token: "f".repeat(64) } })),
 }));
+vi.mock("@/app/actions/action-items", () => ({
+  createActionItem: vi.fn(async () => ({ ok: true })),
+  setActionItemDone: vi.fn(async () => ({ ok: true })),
+  deleteActionItem: vi.fn(async () => ({ ok: true })),
+}));
 vi.mock("@/app/actions/public-entries", () => ({
   submitPublicEntry: vi.fn(async () => ({ ok: true })),
 }));

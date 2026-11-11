@@ -7,6 +7,8 @@ import { formatDateString, type DateRange } from "@/lib/dates";
 import { buttonClass, cardClass, inputClass } from "@/components/ui";
 import { Presenter } from "./presenter";
 import { Emoji } from "@/components/emoji";
+import { createActionItem } from "@/app/actions/action-items";
+import { groupByEntry, isDone, type ActionItem } from "@/lib/action-items";
 
 type Preset = { id: string; label: string; range: DateRange };
 
@@ -17,12 +19,26 @@ type Props = {
   presets: Preset[];
   fields: InsightField[];
   entries: InsightEntry[];
+  actionItems?: ActionItem[];
+  /** Injected for tests. */
+  onCreateActionItem?: (teamId: string, entryId: string, title: string) => ReturnType<typeof createActionItem>;
 };
 
-export function InsightsView({ teamId, teamName, range, presets, fields, entries }: Props) {
+export function InsightsView({
+  teamId,
+  teamName,
+  range,
+  presets,
+  fields,
+  entries,
+  actionItems = [],
+  onCreateActionItem = createActionItem,
+}: Props) {
   const sections = useMemo(() => buildSections(fields, entries), [fields, entries]);
   const counts = useMemo(() => countByField(fields, entries), [fields, entries]);
   const starts = useMemo(() => sectionStarts(sections), [sections]);
+  const actionItemsByEntry = useMemo(() => groupByEntry(actionItems), [actionItems]);
+  const openActionItems = actionItems.filter((item) => !isDone(item)).length;
   const [presenting, setPresenting] = useState<{ startAt: number | null } | null>(null);
   const base = `/teams/${teamId}/insights`;
   const rangeLabel = `${formatDateString(range.from)} – ${formatDateString(range.to)}`;
@@ -76,14 +92,25 @@ export function InsightsView({ teamId, teamName, range, presets, fields, entries
               {rangeLabel} · {entriesLabel(entries.length)}
             </p>
           </div>
-          <button
-            type="button"
-            disabled={entries.length === 0}
-            onClick={() => setPresenting({ startAt: null })}
-            className={buttonClass("primary", "lg", "group")}
-          >
-            <span className="transition group-hover:scale-125">▶</span> התחלת רטרו
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/teams/${teamId}/action-items`} className={buttonClass("secondary", "lg")}>
+              <span aria-hidden>🎯</span> Action items
+              {openActionItems > 0 && (
+                <span className="rounded-full bg-accent px-2.5 py-0.5 text-sm font-bold text-on-accent">
+                  {openActionItems}
+                  <span className="sr-only"> פתוחות</span>
+                </span>
+              )}
+            </Link>
+            <button
+              type="button"
+              disabled={entries.length === 0}
+              onClick={() => setPresenting({ startAt: null })}
+              className={buttonClass("primary", "lg", "group")}
+            >
+              <span className="transition group-hover:scale-125">▶</span> התחלת רטרו
+            </button>
+          </div>
         </div>
 
         {entries.length === 0 ? (
@@ -122,6 +149,8 @@ export function InsightsView({ teamId, teamName, range, presets, fields, entries
           sections={sections}
           startAt={presenting.startAt}
           onClose={() => setPresenting(null)}
+          actionItemsByEntry={actionItemsByEntry}
+          onCreateActionItem={(entryId, title) => onCreateActionItem(teamId, entryId, title)}
         />
       )}
     </div>

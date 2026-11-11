@@ -222,6 +222,35 @@ export type Database = {
         Args: { p_token: string; p_field_id: string; p_content: string };
         Returns: undefined;
       };
+      create_action_item: {
+        Args: { p_team_id: string; p_entry_id: string; p_title: string };
+        Returns: string;
+      };
+      set_action_item_done: {
+        Args: { p_id: string; p_done: boolean };
+        Returns: undefined;
+      };
+      delete_action_item: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
+      get_action_items: {
+        Args: { p_team_id: string };
+        Returns: {
+          id: string;
+          title: string;
+          entry_id: string | null;
+          field_id: string | null;
+          field_label: string | null;
+          field_emoji: string | null;
+          source_content: string | null;
+          created_at: string;
+          created_by_name: string | null;
+          done_at: string | null;
+          done_by_name: string | null;
+          can_delete: boolean;
+        }[];
+      };
     };
     Enums: {
       insights_visibility: InsightsVisibility;

@@ -98,4 +98,55 @@ describe("Presenter", () => {
     renderPresenter(2);
     expect(screen.getByRole("heading", { name: "דנה לוי" })).toBeInTheDocument();
   });
+
+  it("creates an action item from the current insight without moving the slides", async () => {
+    const onCreate = vi.fn(async () => ({ ok: true as const }));
+    render(
+      <Presenter title="צוות" subtitle="" sections={sections} startAt={0} onClose={vi.fn()} onCreateActionItem={onCreate} />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /יצירת Action Item/ }));
+
+    const dialog = screen.getByRole("dialog", { name: /יצירת Action Item/ });
+    expect(dialog).toHaveTextContent("עבודת צוות מעולה");
+    // typing (incl. space / Enter / Backspace) inside the dialog must not change slides
+    await user.type(screen.getByLabelText("מה הצוות צריך לעשות?"), "לשמר את הסשן השבועי{Backspace}י");
+    expect(screen.getByRole("heading", { name: "משה נבון" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "הוספת משימה" }));
+    expect(onCreate).toHaveBeenCalledWith("1", "לשמר את הסשן השבועי");
+    expect(await screen.findByText(/המשימה נוספה/)).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: /יצירת Action Item/ })).not.toBeInTheDocument();
+  });
+
+  it("keeps the dialog open and shows the error when creation fails", async () => {
+    const onCreate = vi.fn(async () => ({ ok: false as const, error: "אין לך הרשאה לבצע את הפעולה" }));
+    render(
+      <Presenter title="צוות" subtitle="" sections={sections} startAt={0} onClose={vi.fn()} onCreateActionItem={onCreate} />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /יצירת Action Item/ }));
+    await user.type(screen.getByLabelText("מה הצוות צריך לעשות?"), "משימה");
+    await user.click(screen.getByRole("button", { name: "הוספת משימה" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("אין לך הרשאה");
+    expect(screen.getByRole("dialog", { name: /יצירת Action Item/ })).toBeInTheDocument();
+  });
+
+  it("lists the action items already linked to the insight, marking done ones", () => {
+    const linked = new Map([
+      [
+        "1",
+        [
+          { id: "a1", title: "פתוחה", doneAt: null },
+          { id: "a2", title: "סגורה", doneAt: "2026-11-05T00:00:00Z" },
+        ],
+      ],
+    ]);
+    render(<Presenter title="צוות" subtitle="" sections={sections} startAt={0} onClose={vi.fn()} actionItemsByEntry={linked} />);
+    const list = screen.getByRole("list", { name: "משימות מהתובנה הזו" });
+    expect(list).toHaveTextContent("פתוחה");
+    expect(list).toHaveTextContent("סגורה(בוצע)");
+    // without a create handler there is no create button
+    expect(screen.queryByRole("button", { name: /יצירת Action Item/ })).not.toBeInTheDocument();
+  });
 });

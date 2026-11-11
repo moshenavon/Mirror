@@ -9,6 +9,8 @@ describe("dbErrorMessage", () => {
     expect(dbErrorMessage({ code: "23505" })).toBe("הרשומה כבר קיימת");
     expect(dbErrorMessage({ code: "23503" })).toContain("קיימים דיווחים");
     expect(dbErrorMessage({ code: "42501" })).toContain("הרשאה");
+    expect(dbErrorMessage({ code: "P0001", hint: "entry_not_found" })).toBe("הדיווח לא נמצא");
+    expect(dbErrorMessage({ code: "P0001", hint: "action_item_not_found" })).toBe("המשימה לא נמצאה");
   });
 
   it("falls back for unknown or missing errors", () => {

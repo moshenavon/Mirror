@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { InsightsView } from "./insights-view";
 
 const props = {
@@ -67,5 +67,24 @@ describe("InsightsView", () => {
     render(<InsightsView {...props} entries={[]} />);
     expect(screen.getByRole("button", { name: /התחלת רטרו/ })).toBeDisabled();
     expect(screen.getByText(/אין דיווחים בטווח/)).toBeInTheDocument();
+  });
+
+  it("links to the action items with the open count and creates items for the team", async () => {
+    const onCreate = vi.fn(async () => ({ ok: true as const }));
+    const actionItems = [
+      { id: "a1", title: "פתוחה", entryId: "1", fieldLabel: null, fieldEmoji: null, sourceContent: null, createdAt: "2026-11-03T00:00:00Z", createdByName: null, doneAt: null, doneByName: null, canDelete: true },
+      { id: "a2", title: "סגורה", entryId: "1", fieldLabel: null, fieldEmoji: null, sourceContent: null, createdAt: "2026-11-02T00:00:00Z", createdByName: null, doneAt: "2026-11-04T00:00:00Z", doneByName: null, canDelete: true },
+    ];
+    const user = userEvent.setup();
+    render(<InsightsView {...props} actionItems={actionItems} onCreateActionItem={onCreate} />);
+    const link = screen.getByRole("link", { name: /Action items/ });
+    expect(link).toHaveAttribute("href", "/teams/t1/action-items");
+    expect(link).toHaveTextContent("1 פתוחות");
+
+    await user.click(screen.getByRole("button", { name: /ממה הייתי עצוב/ }));
+    await user.click(screen.getByRole("button", { name: /יצירת Action Item/ }));
+    await user.type(screen.getByLabelText("מה הצוות צריך לעשות?"), "לדבר על זה");
+    await user.click(screen.getByRole("button", { name: "הוספת משימה" }));
+    expect(onCreate).toHaveBeenCalledWith("t1", "1", "לדבר על זה");
   });
 });
