@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import { UserMenu } from "@/components/user-menu";
 import { Logo } from "@/components/logo";
 import { MotionProvider } from "@/components/motion-provider";
+import { ThemeSync } from "@/components/theme-sync";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -38,8 +40,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="he" dir="rtl" className={`${heebo.variable} h-full antialiased`}>
+    <html lang="he" dir="rtl" className={`${heebo.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
+        <ThemeSync />
         <header className="sticky top-0 z-20 border-b border-border bg-surface/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
             <Link href="/" className="group flex items-center gap-2.5 text-lg font-extrabold tracking-tight">

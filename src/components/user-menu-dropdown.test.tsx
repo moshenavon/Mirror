@@ -13,6 +13,15 @@ describe("UserMenuDropdown", () => {
     expect(screen.getByRole("menuitem", { name: /הצוותים שלי/ })).toHaveAttribute("href", "/");
     expect(screen.getByRole("menuitem", { name: /התנתק/ })).toBeInTheDocument();
 
+    const toggle = screen.getByRole("menuitemcheckbox", { name: /מצב כהה/ });
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(toggle);
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+    expect(localStorage.getItem("theme")).toBe("dark");
+    expect(screen.getByRole("menuitemcheckbox", { name: /מצב בהיר/ })).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: /מצב בהיר/ }));
+    expect(document.documentElement).toHaveAttribute("data-theme", "light");
+
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
