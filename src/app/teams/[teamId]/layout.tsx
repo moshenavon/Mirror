@@ -17,8 +17,8 @@ async function TeamHeader({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const { team, permissions } = await getTeamContext(teamId);
   return (
-    <div className="mb-6 space-y-3 sm:mb-8">
-      <h1 className="text-2xl font-bold sm:text-3xl">{team.name}</h1>
+    <div className="mb-6 animate-fade-up space-y-3 sm:mb-8">
+      <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{team.name}</h1>
       <TeamNav teamId={team.id} canViewInsights={permissions.canViewInsights} isAdmin={permissions.isAdmin} />
     </div>
   );

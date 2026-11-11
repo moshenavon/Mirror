@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "motion/react";
 
 type Props = {
   teamId: string;
@@ -28,12 +29,21 @@ export function TeamNav({ teamId, canViewInsights, isAdmin }: Props) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition ${
-              active ? "bg-accent text-on-accent shadow-sm" : "text-foreground hover:bg-primary-soft"
+            className={`relative flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
+              active ? "text-on-accent" : "text-foreground hover:bg-primary-soft"
             }`}
           >
-            <span aria-hidden>{item.icon}</span>
-            {item.label}
+            {active && (
+              <motion.span
+                layoutId="team-nav-pill"
+                className="absolute inset-0 rounded-xl bg-accent shadow-sm"
+                transition={{ type: "spring", stiffness: 420, damping: 32 }}
+              />
+            )}
+            <span aria-hidden className="relative">
+              {item.icon}
+            </span>
+            <span className="relative">{item.label}</span>
           </Link>
         );
       })}

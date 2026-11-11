@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryContentSchema, fieldSchema, firstError, teamSchema, uuidSchema } from "./validation";
+import { entryContentSchema, fieldSchema, firstError, publicTokenSchema, teamSchema, uuidSchema } from "./validation";
 
 describe("validation", () => {
   it("validates and trims team input", () => {
@@ -27,5 +27,12 @@ describe("validation", () => {
   it("validates uuids", () => {
     expect(uuidSchema.safeParse("d3b07384-d9a0-4c3f-8a5e-2f5c6c7b9a10").success).toBe(true);
     expect(uuidSchema.safeParse("not-a-uuid").success).toBe(false);
+  });
+
+  it("validates public link tokens", () => {
+    expect(publicTokenSchema.safeParse("a1".repeat(32)).success).toBe(true);
+    expect(publicTokenSchema.safeParse("short").success).toBe(false);
+    expect(publicTokenSchema.safeParse("Z".repeat(64)).success).toBe(false);
+    expect(publicTokenSchema.safeParse("../etc/passwd").success).toBe(false);
   });
 });

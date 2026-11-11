@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { UserMenu } from "@/components/user-menu";
 import { Logo } from "@/components/logo";
+import { MotionProvider } from "@/components/motion-provider";
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -50,7 +51,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </Suspense>
           </div>
         </header>
-        <div className="flex flex-1 flex-col">{children}</div>
+        <MotionProvider>
+          <div className="flex flex-1 flex-col">{children}</div>
+        </MotionProvider>
+        <footer className="py-6 text-center text-xs text-muted">
+          אימוג&apos;י מונפשים:{" "}
+          <a
+            href="https://googlefonts.github.io/noto-emoji-animation/"
+            className="underline-offset-2 hover:underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Noto Emoji Animation
+          </a>{" "}
+          (CC BY 4.0)
+        </footer>
       </body>
     </html>
   );

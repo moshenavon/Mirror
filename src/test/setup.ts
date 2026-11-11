@@ -1,6 +1,10 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
+import { MotionGlobalConfig } from "motion";
+
+// Animations finish instantly in tests.
+MotionGlobalConfig.skipAnimations = true;
 
 afterEach(() => {
   cleanup();
@@ -43,4 +47,23 @@ vi.mock("@/app/actions/teams", () => ({
   updateTeamDetails: vi.fn(),
   setInsightsVisibility: vi.fn(async () => ({ ok: true })),
   deleteTeam: vi.fn(async () => ({ ok: true })),
+  setPublicSubmissions: vi.fn(async () => ({ ok: true })),
+  regeneratePublicLink: vi.fn(async () => ({ ok: true, data: { token: "f".repeat(64) } })),
 }));
+vi.mock("@/app/actions/public-entries", () => ({
+  submitPublicEntry: vi.fn(async () => ({ ok: true })),
+}));
+
+// Heavy browser-only animation libraries are stubbed.
+vi.mock("lottie-web/build/player/lottie_light", () => ({
+  default: {
+    loadAnimation: vi.fn(() => ({ play: vi.fn(), stop: vi.fn(), goToAndStop: vi.fn(), destroy: vi.fn() })),
+  },
+}));
+vi.mock("canvas-confetti", () => ({ default: vi.fn() }));
+
+// Emoji JSON requests never hit the network in tests.
+vi.stubGlobal(
+  "fetch",
+  vi.fn(async () => new Response(JSON.stringify({ v: "5.8.1", fr: 60, ip: 0, op: 1, w: 10, h: 10, layers: [] }))),
+);

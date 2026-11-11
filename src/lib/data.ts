@@ -1,30 +1,19 @@
 import "server-only";
 
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { SESSION_COOKIE, verifySessionToken, type SessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import type { RpcReturn, Tables } from "@/lib/supabase/database.types";
 import { teamPermissions, type TeamPermissions } from "@/lib/permissions";
 import { sortByPosition } from "@/lib/fields";
 
-export type CurrentUser = {
-  id: string;
-  email: string;
-  name: string;
-  avatarUrl: string | null;
-};
+export type CurrentUser = SessionUser;
 
-/** The signed-in user (verified JWT claims), or null. Deduped per request. */
+/** The signed-in user (verified session cookie), or null. Deduped per request. */
 export const getOptionalUser = cache(async (): Promise<CurrentUser | null> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
-  const claims = data?.claims;
-  if (error || !claims?.sub) return null;
-  const meta = (claims.user_metadata ?? {}) as Record<string, unknown>;
-  const email = String(claims.email ?? "").toLowerCase();
-  const name = String(meta.full_name ?? meta.name ?? "").trim() || email.split("@")[0];
-  const avatar = meta.avatar_url ?? meta.picture;
-  return { id: claims.sub, email, name, avatarUrl: typeof avatar === "string" ? avatar : null };
+  return verifySessionToken((await cookies()).get(SESSION_COOKIE)?.value);
 });
 
 /** The signed-in user; redirects to /login when missing. */

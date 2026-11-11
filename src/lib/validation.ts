@@ -60,3 +60,6 @@ export type FieldInput = z.infer<typeof fieldSchema>;
 export function firstError(error: z.ZodError): string {
   return error.issues[0]?.message ?? "קלט לא תקין";
 }
+
+/** Public submission link token (64 hex chars). */
+export const publicTokenSchema = z.string().regex(/^[0-9a-f]{32,128}$/, { error: "קישור לא תקין" });

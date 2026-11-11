@@ -13,7 +13,7 @@ export type Database = {
     Tables: {
       entries: {
         Row: {
-          author_id: string;
+          author_id: string | null;
           content: string;
           created_at: string;
           field_id: string;
@@ -22,7 +22,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
-          author_id?: string;
+          author_id?: string | null;
           content: string;
           created_at?: string;
           field_id: string;
@@ -64,11 +64,22 @@ export type Database = {
           created_at: string;
           email: string;
           full_name: string | null;
+          google_sub: string;
           id: string;
           updated_at: string;
         };
-        Insert: never;
-        Update: never;
+        Insert: {
+          avatar_url?: string | null;
+          email: string;
+          full_name?: string | null;
+          google_sub: string;
+          id?: string;
+        };
+        Update: {
+          avatar_url?: string | null;
+          email?: string;
+          full_name?: string | null;
+        };
         Relationships: [];
       };
       team_fields: {
@@ -143,6 +154,7 @@ export type Database = {
           id: string;
           insights_visibility: InsightsVisibility;
           name: string;
+          public_submissions_enabled: boolean;
           updated_at: string;
         };
         Insert: never;
@@ -150,6 +162,7 @@ export type Database = {
           description?: string | null;
           insights_visibility?: InsightsVisibility;
           name?: string;
+          public_submissions_enabled?: boolean;
         };
         Relationships: [];
       };
@@ -164,13 +177,14 @@ export type Database = {
         Args: { p_from: string; p_team_id: string; p_to: string };
         Returns: {
           author_avatar_url: string | null;
-          author_email: string;
-          author_id: string;
+          author_email: string | null;
+          author_id: string | null;
           author_name: string | null;
           content: string;
           created_at: string;
           entry_id: string;
           field_id: string;
+          is_anonymous: boolean;
           updated_at: string;
         }[];
       };
@@ -183,11 +197,29 @@ export type Database = {
           id: string;
           insights_visibility: InsightsVisibility;
           name: string;
+          public_submissions_enabled: boolean;
+          public_token: string | null;
           role: TeamRole;
         }[];
       };
       reorder_fields: {
         Args: { p_field_ids: string[]; p_team_id: string };
+        Returns: undefined;
+      };
+      submit_anonymous_entry: {
+        Args: { p_team_id: string; p_field_id: string; p_content: string };
+        Returns: undefined;
+      };
+      regenerate_public_token: {
+        Args: { p_team_id: string };
+        Returns: string;
+      };
+      get_public_form: {
+        Args: { p_token: string };
+        Returns: Json;
+      };
+      submit_public_entry: {
+        Args: { p_token: string; p_field_id: string; p_content: string };
         Returns: undefined;
       };
     };

@@ -77,3 +77,26 @@ export async function deleteTeam(teamId: string, confirmName: string): Promise<A
   if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
   redirect("/");
 }
+
+export async function setPublicSubmissions(teamId: string, enabled: boolean): Promise<ActionResult> {
+  if (!uuidSchema.safeParse(teamId).success) return fail("צוות לא תקין");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("teams")
+    .update({ public_submissions_enabled: Boolean(enabled) })
+    .eq("id", teamId)
+    .select("id");
+  if (error) return fail(dbErrorMessage(error));
+  if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
+  refresh();
+  return ok();
+}
+
+export async function regeneratePublicLink(teamId: string): Promise<ActionResult<{ token: string }>> {
+  if (!uuidSchema.safeParse(teamId).success) return fail("צוות לא תקין");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("regenerate_public_token", { p_team_id: teamId });
+  if (error || !data) return fail(dbErrorMessage(error, "החלפת הקישור נכשלה"));
+  refresh();
+  return { ok: true, data: { token: data } };
+}

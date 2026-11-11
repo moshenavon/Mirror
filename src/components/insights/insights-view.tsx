@@ -6,6 +6,7 @@ import { buildSections, countByField, entriesLabel, sectionStarts, type InsightE
 import { formatDateString, type DateRange } from "@/lib/dates";
 import { buttonClass, cardClass, inputClass } from "@/components/ui";
 import { Presenter } from "./presenter";
+import { Emoji } from "@/components/emoji";
 
 type Preset = { id: string; label: string; range: DateRange };
 
@@ -29,7 +30,7 @@ export function InsightsView({ teamId, teamName, range, presets, fields, entries
 
   return (
     <div className="space-y-6">
-      <section className={cardClass} aria-labelledby="range-title">
+      <section className={`${cardClass} animate-fade-up`} aria-labelledby="range-title">
         <h2 id="range-title" className="mb-4 text-lg font-semibold">
           טווח תאריכים
         </h2>
@@ -65,7 +66,7 @@ export function InsightsView({ teamId, teamName, range, presets, fields, entries
         </div>
       </section>
 
-      <section className={cardClass} aria-labelledby="summary-title">
+      <section className={`${cardClass} animate-fade-up stagger`} style={{ "--i": 2 } as React.CSSProperties} aria-labelledby="summary-title">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 id="summary-title" className="text-lg font-semibold">
@@ -79,32 +80,31 @@ export function InsightsView({ teamId, teamName, range, presets, fields, entries
             type="button"
             disabled={entries.length === 0}
             onClick={() => setPresenting({ startAt: null })}
-            className={buttonClass("primary", "lg")}
+            className={buttonClass("primary", "lg", "group")}
           >
-            ▶ התחלת רטרו
+            <span className="transition group-hover:scale-125">▶</span> התחלת רטרו
           </button>
         </div>
 
         {entries.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border p-6 text-center text-muted">
+          <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted">
+            <Emoji value="🤔" size={72} className="mx-auto mb-2" />
             אין דיווחים בטווח התאריכים שנבחר.
-          </p>
+          </div>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {sections.map(({ field }, sectionIndex) => {
               const count = counts[field.id] ?? 0;
               return (
-                <li key={field.id}>
+                <li key={field.id} className="animate-fade-up stagger" style={{ "--i": sectionIndex + 3 } as React.CSSProperties}>
                   <button
                     type="button"
                     onClick={() => setPresenting({ startAt: starts[sectionIndex] })}
-                    className="flex w-full items-center gap-3 rounded-xl border border-border p-4 text-start transition hover:border-primary hover:bg-primary-soft"
+                    className="group flex w-full items-center gap-3 rounded-2xl border border-border p-4 text-start transition hover:-translate-y-0.5 hover:border-accent hover:bg-primary-soft hover:shadow-md"
                   >
-                    <span aria-hidden className="text-3xl">
-                      {field.emoji}
-                    </span>
+                    <Emoji value={field.emoji} size={44} className="transition group-hover:scale-110" />
                     <span className="flex-1 font-medium">{field.label}</span>
-                    <span className="rounded-full bg-primary-soft px-3 py-1 text-sm font-semibold text-primary">
+                    <span className="rounded-full bg-accent px-3 py-1 text-sm font-bold text-on-accent">
                       {count}
                     </span>
                   </button>

@@ -1,10 +1,10 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { SESSION_COOKIE } from "@/lib/auth/session";
 
 export async function signOut() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
+  (await cookies()).delete(SESSION_COOKIE);
   redirect("/login");
 }

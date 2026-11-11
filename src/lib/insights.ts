@@ -10,11 +10,15 @@ export type InsightEntry = {
   field_id: string;
   content: string;
   created_at: string;
-  author_id: string;
+  /** No author is stored for anonymous entries. */
+  is_anonymous: boolean;
+  author_id: string | null;
   author_name: string | null;
-  author_email: string;
+  author_email: string | null;
   author_avatar_url: string | null;
 };
+
+export const ANONYMOUS_NAME = "אנונימי";
 
 export type InsightSection = {
   field: InsightField;
@@ -91,7 +95,10 @@ export function countByField(fields: InsightField[], entries: InsightEntry[]): R
   return counts;
 }
 
-export function displayName(entry: Pick<InsightEntry, "author_name" | "author_email">): string {
+export function displayName(
+  entry: Pick<InsightEntry, "author_name" | "author_email"> & { is_anonymous?: boolean },
+): string {
+  if (entry.is_anonymous || !entry.author_email) return entry.author_name?.trim() || ANONYMOUS_NAME;
   return entry.author_name?.trim() || entry.author_email.split("@")[0];
 }
 

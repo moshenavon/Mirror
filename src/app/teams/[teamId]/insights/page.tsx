@@ -45,6 +45,7 @@ async function Insights({
         field_id: r.field_id,
         content: r.content,
         created_at: r.created_at,
+        is_anonymous: r.is_anonymous,
         author_id: r.author_id,
         author_name: r.author_name,
         author_email: r.author_email,

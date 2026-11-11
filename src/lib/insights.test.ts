@@ -24,6 +24,7 @@ const entry = (id: string, field_id: string, created_at: string, name: string | 
   field_id,
   content: `content ${id}`,
   created_at,
+  is_anonymous: false,
   author_id: `u-${id}`,
   author_name: name,
   author_email: `${id}@x.com`,
@@ -73,6 +74,10 @@ describe("names", () => {
   it("falls back to the e-mail user part", () => {
     expect(displayName({ author_name: "  ", author_email: "yossi@x.com" })).toBe("yossi");
     expect(displayName({ author_name: "יוסי כהן", author_email: "y@x.com" })).toBe("יוסי כהן");
+  });
+
+  it("never reveals anything for anonymous entries", () => {
+    expect(displayName({ author_name: null, author_email: null, is_anonymous: true })).toBe("אנונימי");
   });
 
   it("builds initials", () => {

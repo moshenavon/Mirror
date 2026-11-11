@@ -5,6 +5,7 @@ import { deleteEntry, updateEntry } from "@/app/actions/entries";
 import { formatDateTime } from "@/lib/dates";
 import { LIMITS } from "@/lib/validation";
 import { buttonClass, cardClass, inputClass } from "./ui";
+import { Emoji } from "./emoji";
 
 export type HistoryField = { id: string; label: string; emoji: string; isActive: boolean };
 export type HistoryEntry = { id: string; fieldId: string; content: string; createdAt: string; updatedAt: string };
@@ -30,9 +31,11 @@ export function HistoryList({ fields, entries, actions = defaultActions }: Props
 
   if (entries.length === 0) {
     return (
-      <p className="rounded-2xl border border-dashed border-border p-8 text-center text-muted">
+      <div className="animate-fade-up rounded-2xl border border-dashed border-border p-8 text-center text-muted">
+        <Emoji value="🤔" size={72} className="mx-auto mb-2" />
         עדיין לא שלחת דיווחים בצוות הזה.
-      </p>
+        <p className="mt-1 text-sm">דיווחים אנונימיים לא נשמרים כאן.</p>
+      </div>
     );
   }
 
@@ -51,9 +54,11 @@ export function HistoryList({ fields, entries, actions = defaultActions }: Props
           ))}
       </div>
 
+      <p className="text-sm text-muted">🎭 דיווחים שנשלחו באנונימיות לא מופיעים כאן – אין להם שום שיוך אלייך.</p>
+
       <ul className="space-y-3">
-        {visible.map((entry) => (
-          <li key={entry.id}>
+        {visible.map((entry, index) => (
+          <li key={entry.id} className="animate-fade-up stagger" style={{ "--i": Math.min(index, 12) } as React.CSSProperties}>
             <HistoryItem entry={entry} field={fieldById.get(entry.fieldId)} fields={fields} actions={actions} />
           </li>
         ))}
@@ -68,7 +73,7 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-full border px-3.5 py-1.5 text-sm transition ${
+      className={`rounded-full border px-3.5 py-1.5 text-sm transition active:scale-95 ${
         active ? "border-accent bg-accent text-on-accent" : "border-border bg-surface hover:bg-primary-soft"
       }`}
     >
@@ -121,12 +126,13 @@ function HistoryItem({
   const edited = entry.updatedAt.slice(0, 19) !== entry.createdAt.slice(0, 19);
 
   return (
-    <article className={cardClass} aria-label={field?.label ?? "דיווח"}>
+    <article
+      className={`${cardClass} group transition hover:-translate-y-0.5 hover:shadow-md`}
+      aria-label={field?.label ?? "דיווח"}
+    >
       <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 font-medium">
-          <span aria-hidden className="text-2xl">
-            {field?.emoji ?? "💬"}
-          </span>
+        <div className="flex items-center gap-2 font-semibold">
+          <Emoji value={field?.emoji ?? "💬"} size={32} />
           <span>{field?.label ?? "שדה שנמחק"}</span>
         </div>
         <time dateTime={entry.createdAt} className="text-sm text-muted">

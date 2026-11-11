@@ -1,33 +1,36 @@
 import "server-only";
 
-import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 import type { Database } from "./database.types";
 import { getSupabaseEnv } from "./env";
+import { mintSupabaseToken } from "./jwt";
+
+const noSession = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } };
 
 /**
- * Supabase client bound to the current request's cookies.
- * Use in Server Components, Server Actions and Route Handlers.
+ * Supabase client acting as the signed-in user (RLS applies), or as `anon`
+ * when there is no valid session.
  */
 export async function createClient() {
-  const cookieStore = await cookies();
   const { url, key } = getSupabaseEnv();
+  const user = await verifySessionToken((await cookies()).get(SESSION_COOKIE)?.value);
+  if (!user) return createSupabaseClient<Database>(url, key, noSession);
 
-  return createServerClient<Database>(url, key, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        try {
-          for (const { name, value, options } of cookiesToSet) {
-            cookieStore.set(name, value, options);
-          }
-        } catch {
-          // Called from a Server Component – cookies are read-only there.
-          // The proxy refreshes the session, so this is safe to ignore.
-        }
-      },
-    },
-  });
+  const token = await mintSupabaseToken({ sub: user.id, email: user.email, role: "authenticated" });
+  return createSupabaseClient<Database>(url, key, { accessToken: async () => token });
+}
+
+/** Anonymous client (role `anon`) – used by the public submission link. */
+export function createAnonClient() {
+  const { url, key } = getSupabaseEnv();
+  return createSupabaseClient<Database>(url, key, noSession);
+}
+
+/** Privileged client – only for the login callback (profile upsert). */
+export async function createServiceClient() {
+  const { url, key } = getSupabaseEnv();
+  const token = await mintSupabaseToken({ role: "service_role" }, { ttlSeconds: 60 });
+  return createSupabaseClient<Database>(url, key, { accessToken: async () => token });
 }

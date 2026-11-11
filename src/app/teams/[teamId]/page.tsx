@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getFields, getTeamContext } from "@/lib/data";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { ReportBoard } from "@/components/report-board";
+import { createEntry } from "@/app/actions/entries";
 
 export default function ReportPage({ params }: PageProps<"/teams/[teamId]">) {
   return (
@@ -19,11 +20,11 @@ async function Report({ params }: { params: Promise<{ teamId: string }> }) {
 
   return (
     <section>
-      <p className="mb-6 text-xl text-muted">
-        היי {firstName}, <span className="text-foreground">מה בא לך לשתף?</span>
+      <p className="mb-6 animate-fade-up text-xl text-muted">
+        היי {firstName} 👋 <span className="font-semibold text-foreground">מה בא לך לשתף?</span>
       </p>
       <ReportBoard
-        teamId={team.id}
+        onSubmit={createEntry.bind(null, team.id)}
         fields={fields.map((f) => ({ id: f.id, label: f.label, emoji: f.emoji, placeholder: f.placeholder }))}
       />
     </section>

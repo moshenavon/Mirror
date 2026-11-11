@@ -48,11 +48,21 @@ describe("FieldsManager", () => {
     const { user, actions } = setup();
     await user.click(screen.getByRole("button", { name: /הוספת שדה/ }));
     await user.type(screen.getByPlaceholderText("לדוגמה: ממה אני שמח"), "תודות");
-    await user.click(screen.getByRole("button", { name: "🙏" }));
+    await user.click(screen.getByRole("radio", { name: "תודה" }));
+    expect(screen.getByRole("radio", { name: "תודה" })).toHaveAttribute("aria-checked", "true");
     await user.click(screen.getByRole("button", { name: "הוספה" }));
     await waitFor(() =>
       expect(actions.create).toHaveBeenCalledWith("t1", { emoji: "🙏", label: "תודות", placeholder: "" }),
     );
+  });
+
+  it("accepts a custom emoji", async () => {
+    const { user, actions } = setup();
+    await user.click(screen.getByRole("button", { name: /הוספת שדה/ }));
+    await user.type(screen.getByPlaceholderText("לדוגמה: ממה אני שמח"), "כיף");
+    await user.type(screen.getByRole("textbox", { name: "אימוג'י מותאם אישית" }), "🌈");
+    await user.click(screen.getByRole("button", { name: "הוספה" }));
+    await waitFor(() => expect(actions.create).toHaveBeenCalledWith("t1", { emoji: "🌈", label: "כיף", placeholder: "" }));
   });
 
   it("toggles a field active state", async () => {

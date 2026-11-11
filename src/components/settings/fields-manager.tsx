@@ -12,6 +12,9 @@ import {
 import { moveItem } from "@/lib/fields";
 import { LIMITS } from "@/lib/validation";
 import { buttonClass, inputClass } from "@/components/ui";
+import { Emoji } from "@/components/emoji";
+import { ANIMATED_EMOJIS, findAnimatedEmoji, lastGrapheme } from "@/lib/emoji";
+import { AnimatePresence, motion } from "motion/react";
 
 export type ManagedField = {
   id: string;
@@ -36,8 +39,6 @@ const defaultActions: FieldActions = {
   remove: deleteField,
   reorder: reorderFields,
 };
-
-const EMOJI_SUGGESTIONS = ["😄", "😢", "💡", "⚠️", "🙏", "🚀", "😤", "🤔", "🎯", "❤️"];
 
 type Props = { teamId: string; fields: ManagedField[]; actions?: FieldActions };
 
@@ -84,10 +85,16 @@ export function FieldsManager({ teamId, fields, actions = defaultActions }: Prop
   return (
     <div className="space-y-3">
       <ol className="space-y-2">
+        <AnimatePresence initial={false}>
         {order.map((field, index) => (
-          <li
+          <motion.li
             key={field.id}
-            className={`rounded-xl border border-border p-3 ${field.isActive ? "" : "bg-background opacity-70"}`}
+            layout
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, x: 40 }}
+            transition={{ type: "spring", stiffness: 500, damping: 38 }}
+            className={`rounded-2xl border border-border bg-surface p-3 ${field.isActive ? "" : "bg-background opacity-70"}`}
           >
             {editingId === field.id ? (
               <FieldForm
@@ -100,9 +107,7 @@ export function FieldsManager({ teamId, fields, actions = defaultActions }: Prop
             ) : (
               <div className="flex flex-wrap items-center gap-3">
                 <span className="w-6 text-center text-sm text-muted">{index + 1}</span>
-                <span aria-hidden className="text-3xl">
-                  {field.emoji}
-                </span>
+                <Emoji value={field.emoji} size={44} className="transition hover:scale-110" />
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">
                     {field.label}
@@ -160,8 +165,9 @@ export function FieldsManager({ teamId, fields, actions = defaultActions }: Prop
                 </div>
               </div>
             )}
-          </li>
+          </motion.li>
         ))}
+        </AnimatePresence>
       </ol>
 
       {order.length === 0 && <p className="text-muted">אין שדות עדיין.</p>}
@@ -216,15 +222,9 @@ function FieldForm({
       }}
     >
       <div className="flex gap-3">
-        <label className="w-24 shrink-0">
-          <span className="mb-1 block text-sm font-medium">אימוג&apos;י</span>
-          <input
-            value={emoji}
-            onChange={(e) => setEmoji(e.target.value)}
-            maxLength={LIMITS.fieldEmoji}
-            className={`${inputClass} text-center text-2xl`}
-          />
-        </label>
+        <div className="flex w-24 shrink-0 flex-col items-center justify-end">
+          <Emoji value={emoji || "💬"} size={64} key={emoji} />
+        </div>
         <label className="min-w-0 flex-1">
           <span className="mb-1 block text-sm font-medium">כותרת</span>
           <input
@@ -237,18 +237,7 @@ function FieldForm({
           />
         </label>
       </div>
-      <div className="flex flex-wrap gap-1" aria-label="הצעות אימוג'י">
-        {EMOJI_SUGGESTIONS.map((e) => (
-          <button
-            key={e}
-            type="button"
-            onClick={() => setEmoji(e)}
-            className={`rounded-lg px-2 py-1 text-xl hover:bg-primary-soft ${emoji === e ? "bg-primary-soft" : ""}`}
-          >
-            {e}
-          </button>
-        ))}
-      </div>
+      <EmojiPicker value={emoji} onChange={setEmoji} />
       <label className="block">
         <span className="mb-1 block text-sm font-medium">טקסט עזר (מוצג בתיבת הכתיבה)</span>
         <input
@@ -267,5 +256,46 @@ function FieldForm({
         </button>
       </div>
     </form>
+  );
+}
+
+export function EmojiPicker({ value, onChange }: { value: string; onChange: (emoji: string) => void }) {
+  const isCustom = !findAnimatedEmoji(value);
+  return (
+    <fieldset>
+      <legend className="mb-1.5 text-sm font-medium">אימוג&apos;י (מונפשים בתלת-ממד)</legend>
+      <div className="grid grid-cols-5 gap-2 sm:grid-cols-10" role="radiogroup" aria-label="בחירת אימוג'י">
+        {ANIMATED_EMOJIS.map((item) => {
+          const selected = findAnimatedEmoji(value)?.code === item.code;
+          return (
+            <button
+              key={item.code}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              aria-label={item.name}
+              title={item.name}
+              onClick={() => onChange(item.emoji)}
+              className={`flex aspect-square items-center justify-center rounded-2xl border-2 transition hover:-translate-y-0.5 active:scale-90 ${
+                selected ? "border-accent bg-primary-soft shadow-sm" : "border-transparent hover:bg-primary-soft"
+              }`}
+            >
+              <Emoji value={item.emoji} size={40} playing />
+            </button>
+          );
+        })}
+      </div>
+      <label className="mt-2 flex items-center gap-2 text-sm text-muted">
+        או כל אימוג&apos;י אחר:
+        <input
+          value={isCustom ? value : ""}
+          onChange={(e) => onChange(lastGrapheme(e.target.value))}
+          maxLength={LIMITS.fieldEmoji}
+          placeholder="🙂"
+          aria-label="אימוג'י מותאם אישית"
+          className={`${inputClass.replace("w-full", "")} w-20 py-1.5 text-center text-xl`}
+        />
+      </label>
+    </fieldset>
   );
 }

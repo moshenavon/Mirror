@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { buildSections, type InsightEntry, type InsightField } from "@/lib/insights";
@@ -14,6 +14,7 @@ const mk = (id: string, field_id: string, name: string, content: string, created
   field_id,
   content,
   created_at,
+  is_anonymous: false,
   author_id: `u-${id}`,
   author_name: name,
   author_email: `${id}@x.com`,
@@ -58,13 +59,13 @@ describe("Presenter", () => {
     expect(screen.getByRole("button", { name: /המשך/ })).toBeDisabled();
   });
 
-  it("supports keyboard navigation (RTL arrows) and Escape", () => {
+  it("supports keyboard navigation (RTL arrows) and Escape", async () => {
     const { onClose } = renderPresenter(0);
     expect(screen.getByRole("heading", { name: "משה נבון" })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "ArrowLeft" });
-    expect(screen.getByRole("heading", { name: "יוסי כהן" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "יוסי כהן" })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "ArrowRight" });
-    expect(screen.getByRole("heading", { name: "משה נבון" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "משה נבון" })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onClose).toHaveBeenCalled();
   });
@@ -73,6 +74,24 @@ describe("Presenter", () => {
     const { user } = renderPresenter();
     await user.selectOptions(screen.getByRole("combobox", { name: "מעבר לשדה" }), "1");
     expect(screen.getByRole("heading", { name: "דנה לוי" })).toBeInTheDocument();
+  });
+
+  it("shows anonymous entries without any author details", async () => {
+    const anon = buildSections(fields, [
+      { ...mk("9", "sad", "", "סוד", "2026-11-04T00:00:00Z"), is_anonymous: true, author_id: null, author_name: null, author_email: null },
+    ]);
+    render(<Presenter title="צוות" subtitle="" sections={anon} startAt={0} onClose={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: "אנונימי" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "אנונימי" })).toHaveTextContent("🎭");
+    expect(screen.getByText("סוד")).toBeInTheDocument();
+  });
+
+  it("fires a confetti finale at the end", async () => {
+    const confetti = (await import("canvas-confetti")).default;
+    const { user } = renderPresenter(2);
+    await user.click(screen.getByRole("button", { name: /המשך/ }));
+    expect(await screen.findByRole("heading", { name: /סיימנו את הרטרו/ })).toBeInTheDocument();
+    await waitFor(() => expect(confetti).toHaveBeenCalled());
   });
 
   it("can start at a given slide", () => {

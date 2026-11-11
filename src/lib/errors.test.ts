@@ -5,6 +5,7 @@ describe("dbErrorMessage", () => {
   it("maps known database errors", () => {
     expect(dbErrorMessage({ code: "P0001", hint: "last_admin", message: "" })).toContain("מנהל אחד");
     expect(dbErrorMessage({ code: "P0001", message: "Field is not active" })).toContain("לא פעיל");
+    expect(dbErrorMessage({ code: "P0001", hint: "link_disabled" })).toContain("הקישור");
     expect(dbErrorMessage({ code: "23505" })).toBe("הרשומה כבר קיימת");
     expect(dbErrorMessage({ code: "23503" })).toContain("קיימים דיווחים");
     expect(dbErrorMessage({ code: "42501" })).toContain("הרשאה");

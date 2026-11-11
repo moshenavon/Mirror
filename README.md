@@ -12,7 +12,8 @@
 | אפליקציה | Next.js 16 (App Router, Server Components, Server Actions, Cache Components) + TypeScript |
 | עיצוב | Tailwind CSS 4, RTL, פונט Heebo |
 | מסד נתונים | Supabase Postgres + Row Level Security |
-| הזדהות | Supabase Auth – ספק Google (OAuth מ-Google Cloud) |
+| הזדהות | Google OAuth 2.0 ישירות מול Google Cloud (PKCE), cookie חתום משלנו, JWT קצר-מועד ל-RLS |
+| אנימציות | motion, Lottie (Noto Animated Emoji), canvas-confetti |
 | אירוח | Vercel |
 | בדיקות | Vitest + React Testing Library, בדיקות RLS ב-SQL |
 
@@ -22,7 +23,9 @@
 src/
   app/                      # נתיבים (App Router)
     login/                  # מסך התחברות
-    auth/callback/          # החלפת קוד OAuth ל-session
+    auth/google/            # התחלת התחברות מול Google (PKCE)
+    auth/callback/          # אימות ID Token של Google ויצירת session
+    r/[token]/              # קישור ציבורי למילוי ללא הזדהות (אנונימי)
     teams/new/              # יצירת צוות
     teams/[teamId]/         # מסך דיווח (כפתורים גדולים)
       history/              # הדיווחים שלי – סינון, עריכה, מחיקה
@@ -31,7 +34,8 @@ src/
     actions/                # Server Actions (teams/entries/fields/members)
   components/               # קומפוננטות UI (+ בדיקות *.test.tsx)
   lib/                      # לוגיקה טהורה (+ בדיקות), data layer, supabase clients
-  proxy.ts                  # רענון session והגנה על נתיבים (Next 16 "Proxy")
+  lib/auth/                 # session (jose), Google OAuth
+  proxy.ts                  # הגנה על נתיבים (Next 16 "Proxy")
 supabase/
   migrations/               # סכמת מסד הנתונים, RLS ו-RPC
   tests/rls_test.sql        # בדיקות הרשאות (רצות בטרנזקציה ומתגלגלות אחורה)
@@ -51,7 +55,11 @@ npm run dev                  # http://localhost:3000
 |-------|-------|
 | `NEXT_PUBLIC_SUPABASE_URL` | כתובת פרויקט Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | מפתח publishable (ציבורי) |
+| `SUPABASE_JWT_SECRET` | ה-Legacy JWT secret של Supabase – לחתימת JWT למסד הנתונים (סודי, שרת בלבד) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth Client מ-Google Cloud Console |
+| `SESSION_SECRET` | מחרוזת אקראית (32+ תווים) לחתימת cookie ההתחברות |
 | `NEXT_PUBLIC_APP_TIME_ZONE` | אזור זמן לפירוש טווחי תאריכים (ברירת מחדל `Asia/Jerusalem`) |
+| `NEXT_PUBLIC_SITE_URL` | (אופציונלי) כתובת האתר הקנונית |
 
 ## בדיקות
 
@@ -77,12 +85,18 @@ npm run build       # build production
 
 הפרויקט מחובר ל-Vercel (`mirror`) – כל push לריפו יוצר דיפלוי אוטומטי.
 
-### הגדרות חד-פעמיות (Google + Supabase)
+### הגדרות חד-פעמיות
 
-1. **Google Cloud Console** → APIs & Services → Credentials → *Create OAuth client ID* (Web application):
-   - Authorized redirect URI: `https://kcpbotofdgdrwvuclwck.supabase.co/auth/v1/callback`
-2. **Supabase** → Authentication → Sign In / Providers → **Google**: להפעיל ולהזין Client ID + Client Secret.
-3. **Supabase** → Authentication → URL Configuration:
-   - Site URL: כתובת ה-production ב-Vercel.
-   - Redirect URLs: `https://<production-domain>/auth/callback`, `http://localhost:3000/auth/callback`,
-     ולתצוגות preview: `https://*-moshe-faa7.vercel.app/auth/callback`.
+1. **Google Cloud Console** → APIs & Services → Credentials → *Create OAuth client ID* → *Web application*:
+   - Authorized JavaScript origins: `https://mirror-six-gray.vercel.app`, `http://localhost:3000`
+   - Authorized redirect URIs: `https://mirror-six-gray.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`
+   - (OAuth consent screen: שם האפליקציה Mirror + הלוגו, scopes: `openid email profile`)
+2. **Supabase** → Project Settings → JWT Keys → להעתיק את ה-*Legacy JWT secret* למשתנה `SUPABASE_JWT_SECRET` ב-Vercel.
+3. **Vercel** → Settings → Environment Variables: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SUPABASE_JWT_SECRET`
+   (`SESSION_SECRET` כבר מוגדר), ואז Redeploy.
+4. **מסד הנתונים** – להריץ ב-SQL Editor את המיגרציות שב-`supabase/migrations/` שעוד לא הוחלו
+   (הראשונה כבר הוחלה), ואחר כך את `supabase/tests/rls_test.sql` לבדיקה.
+
+## קרדיטים
+
+אימוג'י מונפשים: [Noto Emoji Animation](https://googlefonts.github.io/noto-emoji-animation/) של Google, רישיון CC BY 4.0.

@@ -107,12 +107,16 @@ export function MembersManager({ teamId, currentEmail, members, actions = defaul
       )}
 
       <ul className="divide-y divide-border rounded-xl border border-border">
-        {members.map((member) => {
+        {members.map((member, index) => {
           const displayName = member.name || member.email.split("@")[0];
           const lastAdmin = isLastAdmin(members, member.id);
           const isMe = member.email === currentEmail;
           return (
-            <li key={member.id} className="flex flex-wrap items-center gap-3 p-3">
+            <li
+              key={member.id}
+              className="flex animate-fade-up stagger flex-wrap items-center gap-3 p-3 transition hover:bg-primary-soft/50"
+              style={{ "--i": Math.min(index, 12) } as React.CSSProperties}
+            >
               <Avatar name={displayName} src={member.avatarUrl} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="font-medium">

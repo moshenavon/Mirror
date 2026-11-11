@@ -6,6 +6,7 @@ export function dbErrorMessage(error: DbError, fallback = "אירעה שגיאה
   const { code, message = "", hint } = error;
   if (hint === "last_admin" || message?.includes("at least one admin")) return "בצוות חייב להישאר לפחות מנהל אחד";
   if (hint === "field_inactive" || message?.includes("Field is not active")) return "השדה הזה כבר לא פעיל";
+  if (hint === "link_disabled" || message?.includes("Public link is disabled")) return "הקישור הזה כבר לא פעיל";
   switch (code) {
     case "23505":
       return "הרשומה כבר קיימת";

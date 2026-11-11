@@ -7,16 +7,22 @@ import { dbErrorMessage } from "@/lib/errors";
 import { entryContentSchema, firstError, uuidSchema } from "@/lib/validation";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 
-export async function createEntry(teamId: string, fieldId: string, content: string): Promise<ActionResult> {
+export async function createEntry(
+  teamId: string,
+  fieldId: string,
+  content: string,
+  anonymous = false,
+): Promise<ActionResult> {
   await getCurrentUser();
   if (!uuidSchema.safeParse(teamId).success || !uuidSchema.safeParse(fieldId).success) return fail("שדה לא תקין");
   const parsed = entryContentSchema.safeParse(content);
   if (!parsed.success) return fail(firstError(parsed.error));
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("entries")
-    .insert({ team_id: teamId, field_id: fieldId, content: parsed.data });
+  // Anonymous entries are written by a database function that stores no author at all.
+  const { error } = anonymous
+    ? await supabase.rpc("submit_anonymous_entry", { p_team_id: teamId, p_field_id: fieldId, p_content: parsed.data })
+    : await supabase.from("entries").insert({ team_id: teamId, field_id: fieldId, content: parsed.data });
   if (error) return fail(dbErrorMessage(error, "שליחת הדיווח נכשלה"));
   refresh();
   return ok();

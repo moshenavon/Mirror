@@ -9,6 +9,10 @@ import { InsightsVisibilityToggle } from "@/components/settings/insights-visibil
 import { FieldsManager } from "@/components/settings/fields-manager";
 import { MembersManager } from "@/components/settings/members-manager";
 import { DangerZone } from "@/components/settings/danger-zone";
+import { Emoji } from "@/components/emoji";
+import { PublicLinkSettings } from "@/components/settings/public-link-settings";
+import { headers } from "next/headers";
+import { siteUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "הגדרות צוות" };
 
@@ -30,16 +34,22 @@ async function Settings({
   const [{ teamId }, query] = await Promise.all([params, searchParams]);
   const { team, permissions, user } = await getTeamContext(teamId);
   if (!permissions.isAdmin) notFound();
-  const [fields, members] = await Promise.all([getFields(team.id), getMembers(team.id)]);
+  const [fields, members, requestHeaders] = await Promise.all([getFields(team.id), getMembers(team.id), headers()]);
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const proto = requestHeaders.get("x-forwarded-proto") ?? "https";
+  const origin = host ? `${proto}://${host}` : siteUrl();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 [&>section]:animate-fade-up">
       {query.created === "1" && (
-        <div className="rounded-2xl border border-success/30 bg-success-soft p-5">
-          <p className="text-lg font-semibold">🎉 הצוות נוצר!</p>
+        <div className="flex animate-pop-in items-center gap-4 rounded-2xl border border-success/30 bg-success-soft p-5">
+          <Emoji value="🎉" size={64} />
+          <div>
+          <p className="text-lg font-semibold">הצוות נוצר!</p>
           <p className="mt-1">
             עכשיו הוסיפו את חברי הצוות לפי כתובת המייל של חשבון Google שלהם, והתאימו את שדות הדיווח.
           </p>
+          </div>
         </div>
       )}
 
@@ -79,6 +89,18 @@ async function Settings({
             placeholder: f.placeholder,
             isActive: f.is_active,
           }))}
+        />
+      </section>
+
+      <section className={cardClass} aria-labelledby="public-title">
+        <h2 id="public-title" className="mb-4 text-xl font-semibold">
+          קישור ציבורי למילוי
+        </h2>
+        <PublicLinkSettings
+          teamId={team.id}
+          enabled={team.public_submissions_enabled}
+          token={team.public_token ?? ""}
+          origin={origin}
         />
       </section>
 
