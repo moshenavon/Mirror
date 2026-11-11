@@ -54,10 +54,12 @@
 | 34 | ביצועים: קאש בשרת (`use cache: remote`) לרשימת הצוותים ולשדות, ריענון ברקע, ביטול לפי תגיות בכל פעולת כתיבה; טעינה מקבילית; קאש 30 שניות בדפדפן | ✅ |
 | 35 | קישור ציבורי: אפשרות הצטרפות לצוות (מתחברים עם Google ומצטרפים כחבר רגיל) + בדיקות RLS | ✅ |
 | 36 | 🧑 להחיל את המיגרציה `20261111210000_public_link_join.sql` ב-Supabase | 🧑 |
+| 37 | קובץ מיגרציה מאוחד `supabase/mirror_all_migrations.sql` (נבנה ע"י `scripts/combine-migrations.py`) – בטוח להרצה בכל מצב של מסד הנתונים | ✅ |
 
 ## פעולות שנדרשות מהמשתמש (בסוף)
 
-1. **מסד הנתונים** – Supabase → SQL Editor → להדביק ולהריץ את
+1. **מסד הנתונים** – Supabase → SQL Editor → הכי פשוט: להריץ את `supabase/mirror_all_migrations.sql` (כל המיגרציות בקובץ אחד, בטוח גם אם חלקן כבר הוחלו).
+   לחלופין, להדביק ולהריץ את
    `supabase/migrations/20261111150000_own_auth_anonymous_public.sql`.
    ואחריה את `supabase/migrations/20261111180000_achievements.sql` (מסך ההישגים).
    ואחריה את `supabase/migrations/20261111200000_public_link_identity.sql` (קישור ציבורי עם חובת הזדהות).
