@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import { MotionProvider } from "@/components/motion-provider";
 import { ThemeSync } from "@/components/theme-sync";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { ThemeColorGuard } from "@/components/theme-color-guard";
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="flex min-h-full flex-col font-sans">
         <ThemeSync />
+        <ThemeColorGuard />
         <header className="sticky top-0 z-20 border-b border-border bg-surface/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
             <Link href="/" className="group flex items-center gap-2.5 text-lg font-extrabold tracking-tight">
