@@ -9,6 +9,7 @@ describe("TeamNav", () => {
     render(<TeamNav teamId="t1" canViewInsights={false} isAdmin={false} />);
     expect(screen.getByRole("link", { name: "דיווח" })).toHaveAttribute("href", "/teams/t1");
     expect(screen.getByRole("link", { name: /הדיווחים שלי/ })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /הישגים/ })).toHaveAttribute("href", "/teams/t1/achievements");
     expect(screen.queryByRole("link", { name: /תובנות/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /הגדרות/ })).not.toBeInTheDocument();
   });
