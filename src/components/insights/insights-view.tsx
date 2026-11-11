@@ -120,7 +120,9 @@ export function InsightsView({
           </div>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
-            {sections.map(({ field }, sectionIndex) => {
+            {sections.map((section, sectionIndex) => {
+              if (section.kind !== "field") return null;
+              const { field } = section;
               const count = counts[field.id] ?? 0;
               return (
                 <li key={field.id} className="animate-fade-up stagger" style={{ "--i": sectionIndex + 3 } as React.CSSProperties}>
@@ -146,7 +148,8 @@ export function InsightsView({
         <Presenter
           title={teamName}
           subtitle={rangeLabel}
-          sections={sections}
+          fields={fields}
+          entries={entries}
           startAt={presenting.startAt}
           onClose={() => setPresenting(null)}
           actionItemsByEntry={actionItemsByEntry}

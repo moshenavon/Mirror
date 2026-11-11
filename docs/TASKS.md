@@ -38,21 +38,30 @@
 
 > שלב 2: הקוד הושלם ונבדק (112 בדיקות). המיגרציה `20261111150000_own_auth_anonymous_public.sql` ממתינה להחלה ב-Supabase.
 
-## שלב 3 – Action items
+## שלב 3 – הישגים
 
 | # | משימה | סטטוס |
 |---|-------|:----:|
-| 25 | טבלת `action_items` + RPC (יצירה, רשימה, סימון בוצע, מחיקה) – migration `20261111180000_action_items.sql` | ✅ |
-| 26 | כפתור "יצירת Action Item" בכל שקף במצגת הרטרו + חלון יצירה | ✅ |
-| 27 | מסך משימות: סימון בוצע, ירידה לתחתית, קו חוצה וחיווי ירוק, מחיקה | ✅ |
-| 28 | בדיקות (unit, קומפוננטות, RLS) – כולן עוברות, כולל `rls_test.sql` מול Postgres מקומי | ✅ |
-| 29 | החלת המיגרציה ב-Supabase | 🧑 |
+| 25 | מסך הישגים: מפת דרגות אנכית (0/10/20/50/100), תמונות המשתתפים לפי כמות דיווחים, כרטיס "הדרגה שלי", חגיגת עליית דרגה | ✅ |
+| 26 | RPC `get_achievements` + בדיקות RLS + בדיקות unit וקומפוננטות | ✅ |
+| 27 | 🧑 להחיל את המיגרציה `20261111180000_achievements.sql` ב-Supabase | 🧑 |
+
+## שלב 4 – Action items
+
+| # | משימה | סטטוס |
+|---|-------|:----:|
+| 28 | טבלת `action_items` + RPC (יצירה, רשימה, סימון בוצע, מחיקה) – migration `20261111190000_action_items.sql` | ✅ |
+| 29 | כפתור "יצירת Action Item" בכל שקף במצגת הרטרו + חלון יצירה | ✅ |
+| 30 | מסך משימות: סימון בוצע, ירידה לתחתית, קו חוצה וחיווי ירוק, מחיקה | ✅ |
+| 31 | בדיקות (unit, קומפוננטות, RLS) – כולן עוברות, כולל `rls_test.sql` מול Postgres מקומי | ✅ |
+| 32 | החלת המיגרציה ב-Supabase | 🧑 |
 
 ## פעולות שנדרשות מהמשתמש (בסוף)
 
 1. **מסד הנתונים** – Supabase → SQL Editor → להדביק ולהריץ (לפי הסדר, מה שעוד לא הוחל):
    `supabase/migrations/20261111150000_own_auth_anonymous_public.sql`,
-   `supabase/migrations/20261111180000_action_items.sql`.
+   `supabase/migrations/20261111180000_achievements.sql` (מסך ההישגים),
+   `supabase/migrations/20261111190000_action_items.sql` (Action items).
    אחר כך להריץ את `supabase/tests/rls_test.sql` → צפוי `ALL RLS TESTS PASSED`.
 2. **Google Cloud Console** → APIs & Services → Credentials → Create OAuth client ID → Web application:
    - Authorized JavaScript origins: `https://mirror-six-gray.vercel.app`, `http://localhost:3000`

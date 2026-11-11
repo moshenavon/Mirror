@@ -84,6 +84,14 @@ begin
   perform public.submit_anonymous_entry(v_team, v_field, '  secret thought  ');
   assert (select count(*) from public.entries where team_id = v_team) = 1, 'bob cannot see his anonymous entry';
 
+  -- achievements: every member sees everyone's counts; anonymous entries are not counted
+  assert (select count(*) from public.get_achievements(v_team)) = 2, 'achievements list every member';
+  assert (select entry_count from public.get_achievements(v_team) where member_email = 'bob@example.com') = 1, 'bob has 1 counted entry';
+  assert (select entry_count from public.get_achievements(v_team) where member_email = 'alice@example.com') = 0, 'alice has 0 entries';
+  assert (select is_me from public.get_achievements(v_team) where member_email = 'bob@example.com'), 'bob is me';
+  assert not (select is_me from public.get_achievements(v_team) where member_email = 'alice@example.com'), 'alice is not me';
+  assert (select full_name from public.get_achievements(v_team) where member_email = 'alice@example.com') = 'Alice Admin', 'achievements show names';
+
   update public.teams set name = 'hacked' where id = v_team;
   get diagnostics v_n = row_count; assert v_n = 0, 'member cannot update team';
   update public.teams set public_submissions_enabled = true where id = v_team;
@@ -138,6 +146,11 @@ begin
   begin
     perform public.submit_anonymous_entry(v_team, v_field, 'intruder');
     raise exception 'outsider sent anonymous entry';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.get_achievements(v_team);
+    raise exception 'outsider read achievements';
   exception when insufficient_privilege then null;
   end;
 end $$;
@@ -349,6 +362,11 @@ begin
   begin
     perform public.get_insights((select v::uuid from t_ctx where k = 'team'), now() - interval '1 day', now() + interval '1 day');
     raise exception 'anon called get_insights';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.get_achievements((select v::uuid from t_ctx where k = 'team'));
+    raise exception 'anon called get_achievements';
   exception when insufficient_privilege then null;
   end;
   assert public.get_public_form('deadbeef') is null, 'short/unknown token returns nothing';

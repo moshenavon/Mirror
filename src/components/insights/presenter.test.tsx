@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { buildSections, type InsightEntry, type InsightField } from "@/lib/insights";
+import type { InsightEntry, InsightField } from "@/lib/insights";
 import { Presenter } from "./presenter";
 
 const fields: InsightField[] = [
@@ -21,15 +21,17 @@ const mk = (id: string, field_id: string, name: string, content: string, created
   author_avatar_url: null,
 });
 
-const sections = buildSections(fields, [
+const entries = [
   mk("1", "happy", "משה נבון", "עבודת צוות מעולה", "2026-11-01T10:00:00Z"),
   mk("2", "happy", "יוסי כהן", "הילדים התנהגו יפה", "2026-11-02T10:00:00Z"),
   mk("3", "sad", "דנה לוי", "הדדליין היה לחוץ", "2026-11-03T10:00:00Z"),
-]);
+];
 
 function renderPresenter(startAt: number | null = null) {
   const onClose = vi.fn();
-  render(<Presenter title="צוות" subtitle="1.11.2026 – 14.11.2026" sections={sections} startAt={startAt} onClose={onClose} />);
+  render(
+    <Presenter title="צוות" subtitle="1.11.2026 – 14.11.2026" fields={fields} entries={entries} startAt={startAt} onClose={onClose} />,
+  );
   return { onClose, user: userEvent.setup() };
 }
 
@@ -77,10 +79,10 @@ describe("Presenter", () => {
   });
 
   it("shows anonymous entries without any author details", async () => {
-    const anon = buildSections(fields, [
+    const anon = [
       { ...mk("9", "sad", "", "סוד", "2026-11-04T00:00:00Z"), is_anonymous: true, author_id: null, author_name: null, author_email: null },
-    ]);
-    render(<Presenter title="צוות" subtitle="" sections={anon} startAt={0} onClose={vi.fn()} />);
+    ];
+    render(<Presenter title="צוות" subtitle="" fields={fields} entries={anon} startAt={0} onClose={vi.fn()} />);
     expect(screen.getByRole("heading", { name: "אנונימי" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "אנונימי" })).toHaveTextContent("🎭");
     expect(screen.getByText("סוד")).toBeInTheDocument();
@@ -99,10 +101,47 @@ describe("Presenter", () => {
     expect(screen.getByRole("heading", { name: "דנה לוי" })).toBeInTheDocument();
   });
 
+  it("shows the avatar next to the reporter name", () => {
+    renderPresenter(0);
+    const heading = screen.getByRole("heading", { name: "משה נבון" });
+    expect(heading.previousElementSibling?.querySelector('[role="img"]')).toHaveAccessibleName("משה נבון");
+  });
+
+  it("can present by reporter: all entries of one reporter in field order, then the next", async () => {
+    const byReporter = [
+      mk("1", "sad", "משה נבון", "עצוב של משה", "2026-11-01T10:00:00Z"),
+      mk("2", "happy", "משה נבון", "שמח של משה", "2026-11-03T10:00:00Z"),
+      mk("3", "happy", "דנה לוי", "שמח של דנה", "2026-11-02T10:00:00Z"),
+    ].map((e) => (e.author_name === "משה נבון" ? { ...e, author_id: "moshe" } : e));
+    const user = userEvent.setup();
+    render(<Presenter title="צוות" subtitle="" fields={fields} entries={byReporter} startAt={null} onClose={vi.fn()} />);
+
+    expect(screen.getByRole("radio", { name: /לפי שדות/ })).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByRole("radio", { name: /לפי מדווחים/ }));
+    expect(screen.getByRole("radio", { name: /לפי מדווחים/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("combobox", { name: "מעבר למדווח" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /יאללה/ }));
+    expect(screen.getByRole("heading", { name: "דנה לוי" })).toBeInTheDocument();
+    expect(screen.getByText("שמח של דנה")).toBeInTheDocument();
+    expect(screen.getByText(/1 מתוך 1 · דנה לוי/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /המשך/ }));
+    expect(screen.getByText("סיימנו עם דנה לוי")).toBeInTheDocument();
+    expect(screen.getByText("המדווח הבא")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "משה נבון" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /המשך/ }));
+    expect(screen.getByText("שמח של משה")).toBeInTheDocument(); // field order: happy before sad
+    expect(screen.getByText(/1 מתוך 2 · משה נבון/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /המשך/ }));
+    expect(screen.getByText("עצוב של משה")).toBeInTheDocument();
+  });
+
   it("creates an action item from the current insight without moving the slides", async () => {
     const onCreate = vi.fn(async () => ({ ok: true as const }));
     render(
-      <Presenter title="צוות" subtitle="" sections={sections} startAt={0} onClose={vi.fn()} onCreateActionItem={onCreate} />,
+      <Presenter title="צוות" subtitle="" fields={fields} entries={entries} startAt={0} onClose={vi.fn()} onCreateActionItem={onCreate} />,
     );
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /יצירת Action Item/ }));
@@ -122,7 +161,7 @@ describe("Presenter", () => {
   it("keeps the dialog open and shows the error when creation fails", async () => {
     const onCreate = vi.fn(async () => ({ ok: false as const, error: "אין לך הרשאה לבצע את הפעולה" }));
     render(
-      <Presenter title="צוות" subtitle="" sections={sections} startAt={0} onClose={vi.fn()} onCreateActionItem={onCreate} />,
+      <Presenter title="צוות" subtitle="" fields={fields} entries={entries} startAt={0} onClose={vi.fn()} onCreateActionItem={onCreate} />,
     );
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /יצירת Action Item/ }));
@@ -142,7 +181,7 @@ describe("Presenter", () => {
         ],
       ],
     ]);
-    render(<Presenter title="צוות" subtitle="" sections={sections} startAt={0} onClose={vi.fn()} actionItemsByEntry={linked} />);
+    render(<Presenter title="צוות" subtitle="" fields={fields} entries={entries} startAt={0} onClose={vi.fn()} actionItemsByEntry={linked} />);
     const list = screen.getByRole("list", { name: "משימות מהתובנה הזו" });
     expect(list).toHaveTextContent("פתוחה");
     expect(list).toHaveTextContent("סגורה(בוצע)");

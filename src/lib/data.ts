@@ -110,6 +110,19 @@ export async function getInsights(teamId: string, fromIso: string, toIso: string
   return data ?? [];
 }
 
+export type AchievementRow = RpcReturn<"get_achievements">[number];
+
+/** Entry count of every team member (anonymous entries are never counted). */
+export async function getAchievements(teamId: string): Promise<AchievementRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_achievements", { p_team_id: teamId });
+  if (error) {
+    if (error.code === "42501") notFound();
+    throw new Error(error.message);
+  }
+  return data ?? [];
+}
+
 /** The team's action items (open first, done last). Insight details are empty for non-viewers. */
 export async function getActionItems(teamId: string): Promise<ActionItem[]> {
   const supabase = await createClient();
