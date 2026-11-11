@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { regeneratePublicLink, setPublicRequiresIdentity, setPublicSubmissions } from "@/app/actions/teams";
 import { buttonClass, inputClass } from "@/components/ui";
+import { IncognitoIcon } from "@/components/incognito-icon";
 
 export type PublicLinkActions = {
   setEnabled: typeof setPublicSubmissions;
@@ -20,13 +21,13 @@ const defaultActions: PublicLinkActions = {
 const MODES = [
   {
     value: false,
-    emoji: "🎭",
+    icon: <IncognitoIcon size={20} />,
     title: "אנונימי – בלי הזדהות",
     description: "כל מי שמחזיק בקישור יכול לשלוח, בלי להתחבר. הדיווח נשמר בלי שום שיוך לשולח.",
   },
   {
     value: true,
-    emoji: "🪪",
+    icon: <span aria-hidden>🪪</span>,
     title: "חובה להזדהות",
     description: "הקישור פתוח לכולם, אבל כדי לשלוח צריך להתחבר עם Google. הדיווח נשמר בשם השולח.",
   },
@@ -162,8 +163,8 @@ export function PublicLinkSettings({
                         className="mt-1 accent-[var(--primary)]"
                       />
                       <span>
-                        <span className="block font-semibold">
-                          {mode.emoji} {mode.title}
+                        <span className="flex items-center gap-1.5 font-semibold">
+                          {mode.icon} {mode.title}
                         </span>
                         <span className="block text-sm text-muted">{mode.description}</span>
                       </span>

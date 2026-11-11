@@ -6,6 +6,7 @@ import { formatDateTime } from "@/lib/dates";
 import { LIMITS } from "@/lib/validation";
 import { buttonClass, cardClass, inputClass } from "./ui";
 import { Emoji } from "./emoji";
+import { IncognitoIcon } from "./incognito-icon";
 
 export type HistoryField = { id: string; label: string; emoji: string; isActive: boolean };
 export type HistoryEntry = { id: string; fieldId: string; content: string; createdAt: string; updatedAt: string };
@@ -54,7 +55,9 @@ export function HistoryList({ fields, entries, actions = defaultActions }: Props
           ))}
       </div>
 
-      <p className="text-sm text-muted">🎭 דיווחים שנשלחו באנונימיות לא מופיעים כאן – אין להם שום שיוך אלייך.</p>
+      <p className="text-sm text-muted">
+        <IncognitoIcon className="me-1" /> דיווחים שנשלחו באנונימיות לא מופיעים כאן – אין להם שום שיוך אליך.
+      </p>
 
       <ul className="space-y-3">
         {visible.map((entry, index) => (

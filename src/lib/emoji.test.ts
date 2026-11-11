@@ -1,10 +1,18 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ANIMATED_EMOJIS, animatedEmojiUrl, emojiCode, findAnimatedEmoji, lastGrapheme } from "./emoji";
 
 describe("emoji", () => {
-  it("ships exactly ten animated emojis with unique codes", () => {
-    expect(ANIMATED_EMOJIS).toHaveLength(10);
-    expect(new Set(ANIMATED_EMOJIS.map((e) => e.code)).size).toBe(10);
+  it("ships twenty animated emojis with unique codes", () => {
+    expect(ANIMATED_EMOJIS).toHaveLength(20);
+    expect(new Set(ANIMATED_EMOJIS.map((e) => e.code)).size).toBe(20);
+  });
+
+  it("has a Lottie file for every animated emoji", () => {
+    for (const { code } of ANIMATED_EMOJIS) {
+      expect(existsSync(join(process.cwd(), "public", "emoji", `${code}.json`)), code).toBe(true);
+    }
   });
 
   it("converts emojis to Noto code names", () => {

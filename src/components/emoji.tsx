@@ -51,7 +51,8 @@ function prefersReducedMotion(): boolean {
 type Props = {
   /** Unicode emoji (e.g. "😄"). Known emojis render as animated 3D Lottie. */
   value: string;
-  size?: number;
+  /** Pixels, or any CSS length (e.g. "var(--emoji-size)") for responsive sizing. */
+  size?: number | string;
   /** Whether the animation runs. When false the first frame is shown. */
   playing?: boolean;
   className?: string;
@@ -114,7 +115,7 @@ export function Emoji({ value, size = 48, playing = true, className = "", label 
       {!ready && (
         <span
           className={`leading-none ${playing && !asset ? "animate-float" : ""}`}
-          style={{ fontSize: Math.round(size * 0.82) }}
+          style={{ fontSize: typeof size === "number" ? Math.round(size * 0.82) : `calc(${size} * 0.82)` }}
         >
           {value}
         </span>

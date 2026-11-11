@@ -24,6 +24,7 @@ import { finale } from "@/lib/confetti";
 import { Avatar } from "@/components/avatar";
 import { Emoji } from "@/components/emoji";
 import { buttonClass } from "@/components/ui";
+import { IncognitoIcon } from "@/components/incognito-icon";
 
 type Props = {
   title: string;
@@ -331,16 +332,16 @@ function ReporterAvatar({ reporter, size, className = "" }: { reporter: Reporter
   if (reporter.anonymous) {
     const style =
       typeof size === "number"
-        ? { width: size, height: size, fontSize: Math.round(size * 0.55) }
-        : { width: size, height: size, fontSize: `calc(${size} * 0.55)` };
+        ? { width: size, height: size, fontSize: Math.round(size * 0.6) }
+        : { width: size, height: size, fontSize: `calc(${size} * 0.6)` };
     return (
       <span
         role="img"
         aria-label={reporter.name}
         style={style}
-        className={`inline-flex shrink-0 items-center justify-center rounded-full bg-primary leading-none ${className}`}
+        className={`inline-flex shrink-0 items-center justify-center rounded-full bg-primary leading-none text-on-primary ${className}`}
       >
-        🎭
+        <IncognitoIcon />
       </span>
     );
   }

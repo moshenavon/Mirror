@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { getTeamContext } from "@/lib/data";
 import { TeamNav } from "@/components/team-nav";
@@ -18,6 +19,12 @@ async function TeamHeader({ params }: { params: Promise<{ teamId: string }> }) {
   const { team, permissions } = await getTeamContext(teamId);
   return (
     <div className="mb-6 animate-fade-up space-y-3 sm:mb-8">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-muted transition hover:text-foreground"
+      >
+        <span aria-hidden>→</span> כל הצוותים
+      </Link>
       <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{team.name}</h1>
       <TeamNav teamId={team.id} canViewInsights={permissions.canViewInsights} isAdmin={permissions.isAdmin} />
     </div>

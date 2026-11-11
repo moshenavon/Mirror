@@ -10,6 +10,7 @@ import { Avatar } from "@/components/avatar";
 import { getOptionalUser } from "@/lib/data";
 import { submitPublicEntry } from "@/app/actions/public-entries";
 import { GoogleSignInButton } from "@/app/login/google-sign-in-button";
+import { IncognitoIcon } from "@/components/incognito-icon";
 
 export const metadata: Metadata = {
   title: "שיתוף תובנה",
@@ -89,7 +90,9 @@ async function PublicReport({ params }: { params: Promise<{ token: string }> }) 
       <div className="mb-8 animate-fade-up">
         <p className="text-sm font-semibold text-muted">שיתוף אנונימי עבור</p>
         <h1 className="text-3xl font-extrabold sm:text-4xl">{form.team_name}</h1>
-        <p className="mt-2 text-lg text-muted">בחרו נושא, כתבו מה על הלב – ושלחו. בלי שם, בלי הזדהות. 🎭</p>
+        <p className="mt-2 text-lg text-muted">
+          בחרו נושא, כתבו מה על הלב – ושלחו. בלי שם, בלי הזדהות. <IncognitoIcon />
+        </p>
       </div>
       <ReportBoard
         anonymity="always"

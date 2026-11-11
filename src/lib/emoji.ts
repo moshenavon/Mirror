@@ -15,6 +15,16 @@ export const ANIMATED_EMOJIS: readonly AnimatedEmoji[] = [
   { emoji: "🤔", code: "1f914", name: "מחשבה" },
   { emoji: "🔥", code: "1f525", name: "בוער" },
   { emoji: "❤️", code: "2764_fe0f", name: "אהבה" },
+  { emoji: "👏", code: "1f44f", name: "מחיאות כפיים" },
+  { emoji: "👍", code: "1f44d", name: "לייק" },
+  { emoji: "💪", code: "1f4aa", name: "כוח" },
+  { emoji: "🤝", code: "1f91d", name: "שיתוף פעולה" },
+  { emoji: "🌟", code: "1f31f", name: "כוכב" },
+  { emoji: "🥳", code: "1f973", name: "מסיבה" },
+  { emoji: "😍", code: "1f60d", name: "מאוהב" },
+  { emoji: "😡", code: "1f621", name: "כעס" },
+  { emoji: "😱", code: "1f631", name: "בהלה" },
+  { emoji: "🤯", code: "1f92f", name: "פיצוץ מוח" },
 ];
 
 /** Code points of an emoji as lower-case hex joined by "_" (Noto naming). */

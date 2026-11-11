@@ -22,6 +22,16 @@ export async function createClient() {
   return createSupabaseClient<Database>(url, key, { accessToken: async () => token });
 }
 
+/**
+ * Supabase client acting as a given (already verified) user, without reading
+ * cookies – for use inside `use cache` scopes, which cannot read the request.
+ */
+export async function createClientForUser(user: { id: string; email: string }) {
+  const { url, key } = getSupabaseEnv();
+  const token = await mintSupabaseToken({ sub: user.id, email: user.email, role: "authenticated" });
+  return createSupabaseClient<Database>(url, key, { ...noSession, accessToken: async () => token });
+}
+
 /** Anonymous client (role `anon`) – used by the public submission link. */
 export function createAnonClient() {
   const { url, key } = getSupabaseEnv();
