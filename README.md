@@ -25,7 +25,7 @@ src/
     login/                  # מסך התחברות
     auth/google/            # התחלת התחברות מול Google (PKCE)
     auth/callback/          # אימות ID Token של Google ויצירת session
-    r/[token]/              # קישור ציבורי למילוי ללא הזדהות (אנונימי)
+    r/[token]/              # קישור ציבורי למילוי (אנונימי, או עם חובת הזדהות)
     teams/new/              # יצירת צוות
     teams/[teamId]/         # מסך דיווח (כפתורים גדולים)
       history/              # הדיווחים שלי – סינון, עריכה, מחיקה

@@ -84,7 +84,7 @@ describe("Presenter", () => {
     ];
     render(<Presenter title="צוות" subtitle="" fields={fields} entries={anon} startAt={0} onClose={vi.fn()} />);
     expect(screen.getByRole("heading", { name: "אנונימי" })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "אנונימי" })).toHaveTextContent("🎭");
+    expect(screen.getByRole("img", { name: "אנונימי" }).querySelector('[data-icon="incognito"]')).not.toBeNull();
     expect(screen.getByText("סוד")).toBeInTheDocument();
   });
 

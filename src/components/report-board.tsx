@@ -6,6 +6,7 @@ import { LIMITS } from "@/lib/validation";
 import { celebrate } from "@/lib/confetti";
 import { Emoji } from "./emoji";
 import { buttonClass, inputClass } from "./ui";
+import { IncognitoIcon } from "./incognito-icon";
 
 export type ReportField = {
   id: string;
@@ -19,9 +20,18 @@ type Result = { ok: true } | { ok: false; error: string };
 type Props = {
   fields: ReportField[];
   onSubmit: (fieldId: string, content: string, anonymous: boolean) => Promise<Result>;
-  /** "optional": the sender may tick "anonymous"; "always": public link – every entry is anonymous. */
-  anonymity?: "optional" | "always";
+  /**
+   * "optional": the sender may tick "anonymous";
+   * "always": anonymous public link – every entry is anonymous;
+   * "never": identified public link – every entry is stored under the sender's name.
+   */
+  anonymity?: Anonymity;
 };
+
+type Anonymity = "optional" | "always" | "never";
+
+/** From this many fields, phones show the buttons in two columns. */
+export const COMPACT_FROM = 4;
 
 export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props) {
   const [active, setActive] = useState<ReportField | null>(null);
@@ -41,9 +51,16 @@ export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props)
     );
   }
 
+  // On phones a single column of big buttons quickly runs past the first screen,
+  // so from COMPACT_FROM fields on, phones get two columns of smaller buttons.
+  const compact = fields.length >= COMPACT_FROM;
+
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div
+        data-layout={compact ? "compact" : "comfortable"}
+        className={`grid sm:grid-cols-2 sm:gap-4 ${compact ? "grid-cols-2 gap-3" : "grid-cols-1 gap-4"}`}
+      >
         {fields.map((field, index) => (
           <motion.button
             key={field.id}
@@ -54,7 +71,13 @@ export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props)
             transition={{ delay: index * 0.07, type: "spring", stiffness: 260, damping: 22 }}
             whileHover={{ y: -6, rotate: index % 2 ? 1 : -1 }}
             whileTap={{ scale: 0.96 }}
-            className="group relative flex min-h-44 flex-col items-center justify-center gap-3 overflow-hidden rounded-[2rem] border-2 border-border bg-surface p-6 text-center shadow-sm transition-[border-color,box-shadow] hover:border-accent hover:shadow-xl hover:shadow-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-56"
+            className={`group relative flex flex-col items-center justify-center overflow-hidden border-2 border-border bg-surface text-center shadow-sm transition-[border-color,box-shadow] hover:border-accent hover:shadow-xl hover:shadow-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-56 sm:gap-3 sm:rounded-[2rem] sm:p-6 ${
+              compact
+                ? `min-h-32 gap-2 rounded-3xl p-3 [--emoji-size:60px] sm:[--emoji-size:96px] ${
+                    fields.length % 2 === 1 && index === fields.length - 1 ? "col-span-2 sm:col-span-1" : ""
+                  }`
+                : "min-h-44 gap-3 rounded-[2rem] p-6 [--emoji-size:96px]"
+            }`}
           >
             <span
               aria-hidden
@@ -62,10 +85,12 @@ export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props)
             />
             <Emoji
               value={field.emoji}
-              size={96}
+              size="var(--emoji-size)"
               className="relative transition-transform duration-300 group-hover:scale-110"
             />
-            <span className="relative text-2xl font-bold sm:text-3xl">{field.label}</span>
+            <span className={`relative font-bold leading-tight sm:text-3xl ${compact ? "text-lg" : "text-2xl"}`}>
+              {field.label}
+            </span>
           </motion.button>
         ))}
       </div>
@@ -110,7 +135,7 @@ export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props)
 
 type DialogProps = {
   field: ReportField;
-  anonymity: "optional" | "always";
+  anonymity: Anonymity;
   onClose: () => void;
   onSubmit: (content: string, anonymous: boolean) => Promise<Result>;
 };
@@ -202,7 +227,9 @@ export function EntryDialog({ field, anonymity, onClose, onSubmit }: DialogProps
               />
             </span>
             <span>
-              <span className="block font-semibold">🎭 שליחה אנונימית</span>
+              <span className="flex items-center gap-1.5 font-semibold">
+                <IncognitoIcon size={20} /> שליחה אנונימית
+              </span>
               <AnimatePresence initial={false}>
                 {anonymous && (
                   <motion.span
@@ -211,15 +238,19 @@ export function EntryDialog({ field, anonymity, onClose, onSubmit }: DialogProps
                     exit={{ opacity: 0, height: 0 }}
                     className="block overflow-hidden text-sm text-muted"
                   >
-                    הדיווח יישמר בלי שום שיוך אלייך – גם לא במסד הנתונים. הוא לא יופיע בהיסטוריה שלך ולא תוכלו לערוך
+                    הדיווח יישמר בלי שום שיוך אליך – גם לא במסד הנתונים. הוא לא יופיע בהיסטוריה שלך ולא תוכלו לערוך
                     אותו.
                   </motion.span>
                 )}
               </AnimatePresence>
             </span>
           </label>
+        ) : anonymity === "always" ? (
+          <p className="mt-3 flex items-center gap-2 rounded-2xl bg-primary-soft p-3 text-sm">
+            <IncognitoIcon size={20} /> הדיווח יישלח באופן אנונימי לחלוטין.
+          </p>
         ) : (
-          <p className="mt-3 rounded-2xl bg-primary-soft p-3 text-sm">🎭 הדיווח יישלח באופן אנונימי לחלוטין.</p>
+          <p className="mt-3 rounded-2xl bg-primary-soft p-3 text-sm">🪪 הדיווח יישלח בשמך.</p>
         )}
 
         <AnimatePresence>

@@ -1,10 +1,12 @@
 import "server-only";
 
 import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { SESSION_COOKIE, verifySessionToken, type SessionUser } from "@/lib/auth/session";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createClientForUser } from "@/lib/supabase/server";
+import { cacheTags } from "@/lib/cache-tags";
 import type { RpcReturn, Tables } from "@/lib/supabase/database.types";
 import { teamPermissions, type TeamPermissions } from "@/lib/permissions";
 import { sortByPosition } from "@/lib/fields";
@@ -26,12 +28,30 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 
 export type MyTeam = RpcReturn<"my_teams">[number];
 
-export const getMyTeams = cache(async (): Promise<MyTeam[]> => {
-  await getCurrentUser();
-  const supabase = await createClient();
+/**
+ * Server cache for the data every team screen needs (team list + fields).
+ * Entries are per user, so RLS still decides what is in them. After
+ * `revalidate` seconds the cached value is served while a fresh one is
+ * fetched in the background; Server Actions expire the tags on writes.
+ */
+const TEAM_DATA_LIFE = { stale: 60, revalidate: 60, expire: 60 * 60 * 24 };
+
+type CacheUser = { id: string; email: string };
+
+async function fetchMyTeams(user: CacheUser): Promise<MyTeam[]> {
+  "use cache: remote";
+  cacheLife(TEAM_DATA_LIFE);
+  const supabase = await createClientForUser(user);
   const { data, error } = await supabase.rpc("my_teams");
   if (error) throw new Error(error.message);
-  return data ?? [];
+  const teams = data ?? [];
+  cacheTag(cacheTags.teamsOf(user.email), ...teams.map((t) => cacheTags.team(t.id)));
+  return teams;
+}
+
+export const getMyTeams = cache(async (): Promise<MyTeam[]> => {
+  const user = await getCurrentUser();
+  return fetchMyTeams({ id: user.id, email: user.email });
 });
 
 export type TeamContext = {
@@ -51,13 +71,25 @@ export const getTeamContext = cache(async (teamId: string): Promise<TeamContext>
 
 export type Field = Tables<"team_fields">;
 
-export const getFields = cache(async (teamId: string, activeOnly = false): Promise<Field[]> => {
-  const supabase = await createClient();
-  let query = supabase.from("team_fields").select("*").eq("team_id", teamId);
-  if (activeOnly) query = query.eq("is_active", true);
-  const { data, error } = await query.order("position").order("created_at");
+async function fetchFields(user: CacheUser, teamId: string): Promise<Field[]> {
+  "use cache: remote";
+  cacheLife(TEAM_DATA_LIFE);
+  cacheTag(cacheTags.fields(teamId), cacheTags.teamsOf(user.email));
+  const supabase = await createClientForUser(user);
+  const { data, error } = await supabase
+    .from("team_fields")
+    .select("*")
+    .eq("team_id", teamId)
+    .order("position")
+    .order("created_at");
   if (error) throw new Error(error.message);
   return sortByPosition(data ?? []);
+}
+
+export const getFields = cache(async (teamId: string, activeOnly = false): Promise<Field[]> => {
+  const user = await getCurrentUser();
+  const fields = await fetchFields({ id: user.id, email: user.email }, teamId);
+  return activeOnly ? fields.filter((f) => f.is_active) : fields;
 });
 
 export type Entry = Tables<"entries">;

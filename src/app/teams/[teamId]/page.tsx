@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { notFound } from "next/navigation";
+import { uuidSchema } from "@/lib/validation";
 import { getFields, getTeamContext } from "@/lib/data";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { ReportBoard } from "@/components/report-board";
@@ -14,8 +16,10 @@ export default function ReportPage({ params }: PageProps<"/teams/[teamId]">) {
 
 async function Report({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
-  const { team, user } = await getTeamContext(teamId);
-  const fields = await getFields(team.id, true);
+  if (!uuidSchema.safeParse(teamId).success) notFound();
+  // Both reads are cached on the server and run in parallel; fields are RLS-protected,
+  // and getTeamContext 404s for non-members.
+  const [{ team, user }, fields] = await Promise.all([getTeamContext(teamId), getFields(teamId, true)]);
   const firstName = user.name.split(" ")[0];
 
   return (

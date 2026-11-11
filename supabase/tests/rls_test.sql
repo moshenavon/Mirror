@@ -372,6 +372,179 @@ begin
   assert public.get_public_form('deadbeef') is null, 'short/unknown token returns nothing';
 end $$;
 
+-- ---------- public link that requires identification ----------
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+  v_n int;
+begin
+  assert not (select public_requires_identity from public.my_teams() where id = v_team), 'public link is anonymous by default';
+  update public.teams set public_requires_identity = true where id = v_team;
+  get diagnostics v_n = row_count; assert v_n = 0, 'non-admin cannot require identification';
+end $$;
+
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+begin
+  update public.teams set public_requires_identity = true where id = v_team;
+  assert (select public_requires_identity from public.my_teams() where id = v_team), 'admin requires identification';
+end $$;
+
+reset role;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role anon;
+do $$
+declare
+  v_token text := (select v from t_ctx where k = 'token');
+  v_form jsonb := public.get_public_form((select v from t_ctx where k = 'token'));
+begin
+  assert (v_form ->> 'requires_identity')::boolean, 'public form tells that identification is required';
+  begin
+    perform public.submit_public_entry(v_token, (v_form -> 'fields' -> 0 ->> 'id')::uuid, 'who am I');
+    raise exception 'anon submitted through identified link';
+  exception when sqlstate '28000' then null;
+  end;
+end $$;
+
+-- unknown subject (no profile) is not identified either
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000ff","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_token text := (select v from t_ctx where k = 'token');
+  v_form jsonb := public.get_public_form((select v from t_ctx where k = 'token'));
+begin
+  begin
+    perform public.submit_public_entry(v_token, (v_form -> 'fields' -> 0 ->> 'id')::uuid, 'ghost');
+    raise exception 'unknown subject submitted through identified link';
+  exception when sqlstate '28000' then null;
+  end;
+end $$;
+
+-- carol is not a team member, but may report through the identified link under her name
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_token text := (select v from t_ctx where k = 'token');
+  v_form jsonb := public.get_public_form((select v from t_ctx where k = 'token'));
+  v_entry uuid;
+  v_n int;
+begin
+  perform public.submit_public_entry(v_token, (v_form -> 'fields' -> 0 ->> 'id')::uuid, '  carol speaks  ');
+  assert (select count(*) from public.entries) = 1, 'carol sees her own entry';
+  assert (select content from public.entries) = 'carol speaks', 'identified content trimmed';
+  assert (select author_id from public.entries) = auth.uid(), 'identified entry is authored by carol';
+  assert (select count(*) from public.teams) = 0, 'reporting does not make carol a member';
+  select id into v_entry from public.entries;
+  update public.entries set content = 'edited' where id = v_entry;
+  get diagnostics v_n = row_count; assert v_n = 0, 'non-member cannot edit the entry';
+  begin
+    perform public.get_insights((select v::uuid from t_ctx where k = 'team'), now() - interval '1 day', now() + interval '1 day');
+    raise exception 'carol read insights';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+-- ---------- joining the team through the public link ----------
+-- carol (still an outsider) cannot join while joining is off
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_token text := (select v from t_ctx where k = 'token');
+begin
+  assert not (public.get_public_form(v_token) ->> 'allow_join')::boolean, 'joining is off by default';
+  assert public.get_public_form(v_token) -> 'member_team_id' = 'null'::jsonb, 'outsider is not reported as member';
+  begin
+    perform public.join_team_via_link(v_token);
+    raise exception 'joined while joining is off';
+  exception when sqlstate 'P0001' then
+    if sqlerrm not like '%Joining%' then raise; end if;
+  end;
+end $$;
+
+-- alice (member) cannot enable joining; bob (admin) can
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+  v_n int;
+begin
+  update public.teams set public_allow_join = true where id = v_team;
+  get diagnostics v_n = row_count; assert v_n = 0, 'non-admin cannot allow joining';
+end $$;
+
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+begin
+  update public.teams set public_allow_join = true where id = v_team;
+  assert (select public_allow_join from public.my_teams() where id = v_team), 'admin allows joining';
+end $$;
+
+-- anon cannot join (must sign in)
+reset role;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role anon;
+do $$ begin
+  assert (public.get_public_form((select v from t_ctx where k = 'token')) ->> 'allow_join')::boolean, 'form tells joining is allowed';
+  begin
+    perform public.join_team_via_link((select v from t_ctx where k = 'token'));
+    raise exception 'anon joined';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+-- unknown subject (no profile) cannot join
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000ff","role":"authenticated"}', true);
+set local role authenticated;
+do $$ begin
+  begin
+    perform public.join_team_via_link((select v from t_ctx where k = 'token'));
+    raise exception 'unknown subject joined';
+  exception when sqlstate '28000' then null;
+  end;
+end $$;
+
+-- carol joins and becomes a regular member
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+  v_token text := (select v from t_ctx where k = 'token');
+  v_field uuid := (select v::uuid from t_ctx where k = 'field');
+  v_n int;
+begin
+  assert public.join_team_via_link(v_token) = v_team, 'join returns the team';
+  assert public.join_team_via_link(v_token) = v_team, 'joining twice is harmless';
+  assert (select count(*) from public.team_members where team_id = v_team and email = 'carol@example.com') = 1, 'carol added once';
+  assert (select role from public.my_teams() where id = v_team) = 'member', 'carol joined as member';
+  assert (select public_token from public.my_teams() where id = v_team) is null, 'joined member does not see the token';
+  assert (public.get_public_form(v_token) ->> 'member_team_id')::uuid = v_team, 'form reports carol as member';
+  assert (select count(*) from public.team_fields where team_id = v_team) = 4, 'carol reads fields like any member';
+  update public.teams set public_allow_join = false where id = v_team;
+  get diagnostics v_n = row_count; assert v_n = 0, 'joined member cannot change settings';
+end $$;
+
 -- ---------- bob (now admin): insights allowed, regenerate link, cleanup ----------
 reset role;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
@@ -388,6 +561,8 @@ declare
 begin
   assert (select count(*) from public.get_insights(v_team, now() - interval '1 day', now() + interval '1 day')
           where is_anonymous) = 2, 'public + anonymous entries are both anonymous';
+  assert (select author_name from public.get_insights(v_team, now() - interval '1 day', now() + interval '1 day')
+          where content = 'carol speaks' and not is_anonymous) = 'Carol Outsider', 'identified public entry shows its author';
 
   v_new := public.regenerate_public_token(v_team);
   assert v_new <> v_old and length(v_new) = 64, 'token regenerated';

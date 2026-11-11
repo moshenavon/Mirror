@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { refresh } from "next/cache";
+import { refresh, updateTag } from "next/cache";
+import { cacheTags } from "@/lib/cache-tags";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/data";
 import { dbErrorMessage } from "@/lib/errors";
@@ -11,7 +12,7 @@ import { fail, ok, type ActionResult } from "@/lib/action-result";
 export type FormState = { error?: string; success?: string } | undefined;
 
 export async function createTeam(_prev: FormState, formData: FormData): Promise<FormState> {
-  await getCurrentUser();
+  const user = await getCurrentUser();
   const parsed = teamSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
@@ -24,6 +25,7 @@ export async function createTeam(_prev: FormState, formData: FormData): Promise<
     p_description: parsed.data.description ?? undefined,
   });
   if (error || !data) return { error: dbErrorMessage(error, "יצירת הצוות נכשלה") };
+  updateTag(cacheTags.teamsOf(user.email));
 
   redirect(`/teams/${data}/settings?created=1`);
 }
@@ -44,6 +46,7 @@ export async function updateTeamDetails(teamId: string, _prev: FormState, formDa
     .select("id");
   if (error) return { error: dbErrorMessage(error) };
   if (!data?.length) return { error: dbErrorMessage({ code: "42501" }) };
+  updateTag(cacheTags.team(teamId));
   refresh();
   return { success: "הפרטים נשמרו" };
 }
@@ -61,6 +64,7 @@ export async function setInsightsVisibility(teamId: string, visibility: string):
     .select("id");
   if (error) return fail(dbErrorMessage(error));
   if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
+  updateTag(cacheTags.team(teamId));
   refresh();
   return ok();
 }
@@ -75,6 +79,7 @@ export async function deleteTeam(teamId: string, confirmName: string): Promise<A
   const { data, error } = await supabase.from("teams").delete().eq("id", teamId).select("id");
   if (error) return fail(dbErrorMessage(error));
   if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
+  updateTag(cacheTags.team(teamId));
   redirect("/");
 }
 
@@ -88,6 +93,37 @@ export async function setPublicSubmissions(teamId: string, enabled: boolean): Pr
     .select("id");
   if (error) return fail(dbErrorMessage(error));
   if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
+  updateTag(cacheTags.team(teamId));
+  refresh();
+  return ok();
+}
+
+export async function setPublicRequiresIdentity(teamId: string, required: boolean): Promise<ActionResult> {
+  if (!uuidSchema.safeParse(teamId).success) return fail("צוות לא תקין");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("teams")
+    .update({ public_requires_identity: Boolean(required) })
+    .eq("id", teamId)
+    .select("id");
+  if (error) return fail(dbErrorMessage(error));
+  if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
+  updateTag(cacheTags.team(teamId));
+  refresh();
+  return ok();
+}
+
+export async function setPublicAllowJoin(teamId: string, allowed: boolean): Promise<ActionResult> {
+  if (!uuidSchema.safeParse(teamId).success) return fail("צוות לא תקין");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("teams")
+    .update({ public_allow_join: Boolean(allowed) })
+    .eq("id", teamId)
+    .select("id");
+  if (error) return fail(dbErrorMessage(error));
+  if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
+  updateTag(cacheTags.team(teamId));
   refresh();
   return ok();
 }
@@ -97,6 +133,7 @@ export async function regeneratePublicLink(teamId: string): Promise<ActionResult
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("regenerate_public_token", { p_team_id: teamId });
   if (error || !data) return fail(dbErrorMessage(error, "החלפת הקישור נכשלה"));
+  updateTag(cacheTags.team(teamId));
   refresh();
   return { ok: true, data: { token: data } };
 }

@@ -45,6 +45,16 @@
 | 25 | מסך הישגים: מפת דרגות אנכית (0/10/20/50/100), תמונות המשתתפים לפי כמות דיווחים, כרטיס "הדרגה שלי", חגיגת עליית דרגה | ✅ |
 | 26 | RPC `get_achievements` + בדיקות RLS + בדיקות unit וקומפוננטות | ✅ |
 | 27 | 🧑 להחיל את המיגרציה `20261111180000_achievements.sql` ב-Supabase | 🧑 |
+| 28 | קישור ציבורי עם חובת הזדהות: המנהל בוחר אנונימי / חובה להזדהות; בחובת הזדהות הדיווח נשמר בשם השולח | ✅ |
+| 29 | 🧑 להחיל את המיגרציה `20261111200000_public_link_identity.sql` ב-Supabase | 🧑 |
+| 30 | מסך דיווח בטלפון: מ-4 שדות ומעלה – שתי עמודות של כפתורים קומפקטיים | ✅ |
+| 31 | אייקון בלש (כובע ומשקפיים) במקום 🎭 בכל מקום שמסמן אנונימיות | ✅ |
+| 32 | 10 אימוג'י מונפשים נוספים (סה"כ 20) | ✅ |
+| 33 | ניווט: "הצוותים שלי" בכותרת העליונה + "כל הצוותים" במסכי הצוות | ✅ |
+| 34 | ביצועים: קאש בשרת (`use cache: remote`) לרשימת הצוותים ולשדות, ריענון ברקע, ביטול לפי תגיות בכל פעולת כתיבה; טעינה מקבילית; קאש 30 שניות בדפדפן | ✅ |
+| 35 | קישור ציבורי: אפשרות הצטרפות לצוות (מתחברים עם Google ומצטרפים כחבר רגיל) + בדיקות RLS | ✅ |
+| 36 | 🧑 להחיל את המיגרציה `20261111210000_public_link_join.sql` ב-Supabase | 🧑 |
+| 37 | קובץ מיגרציה מאוחד `supabase/mirror_all_migrations.sql` (נבנה ע"י `scripts/combine-migrations.py`) – בטוח להרצה בכל מצב של מסד הנתונים | ✅ |
 
 ## שלב 4 – Action items
 
@@ -58,10 +68,13 @@
 
 ## פעולות שנדרשות מהמשתמש (בסוף)
 
-1. **מסד הנתונים** – Supabase → SQL Editor → להדביק ולהריץ (לפי הסדר, מה שעוד לא הוחל):
+1. **מסד הנתונים** – Supabase → SQL Editor → הכי פשוט: להריץ את `supabase/mirror_all_migrations.sql` (כל המיגרציות בקובץ אחד, בטוח גם אם חלקן כבר הוחלו).
+   לחלופין, להדביק ולהריץ לפי הסדר את מה שעוד לא הוחל:
    `supabase/migrations/20261111150000_own_auth_anonymous_public.sql`,
    `supabase/migrations/20261111180000_achievements.sql` (מסך ההישגים),
-   `supabase/migrations/20261111190000_action_items.sql` (Action items).
+   `supabase/migrations/20261111190000_action_items.sql` (Action items),
+   `supabase/migrations/20261111200000_public_link_identity.sql` (קישור ציבורי עם חובת הזדהות),
+   `supabase/migrations/20261111210000_public_link_join.sql` (הצטרפות לצוות דרך הקישור).
    אחר כך להריץ את `supabase/tests/rls_test.sql` → צפוי `ALL RLS TESTS PASSED`.
 2. **Google Cloud Console** → APIs & Services → Credentials → Create OAuth client ID → Web application:
    - Authorized JavaScript origins: `https://mirror-six-gray.vercel.app`, `http://localhost:3000`

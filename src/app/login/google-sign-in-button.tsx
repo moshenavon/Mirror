@@ -11,12 +11,13 @@ const ERRORS: Record<string, string> = {
   auth: "ההתחברות נכשלה, נסו שוב",
 };
 
-export function GoogleSignInButton() {
+/** `next` overrides the post-login destination taken from the `?next=` query parameter. */
+export function GoogleSignInButton({ next }: { next?: string } = {}) {
   const searchParams = useSearchParams();
   const [pending, setPending] = useState(false);
   const errorKey = searchParams.get("error");
   const error = errorKey ? (ERRORS[errorKey] ?? ERRORS.auth) : null;
-  const href = `/auth/google?next=${encodeURIComponent(safeNextPath(searchParams.get("next")))}`;
+  const href = `/auth/google?next=${encodeURIComponent(safeNextPath(next ?? searchParams.get("next")))}`;
 
   return (
     <div>

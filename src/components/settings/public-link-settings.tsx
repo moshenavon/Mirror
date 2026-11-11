@@ -2,27 +2,69 @@
 
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { regeneratePublicLink, setPublicSubmissions } from "@/app/actions/teams";
+import {
+  regeneratePublicLink,
+  setPublicAllowJoin,
+  setPublicRequiresIdentity,
+  setPublicSubmissions,
+} from "@/app/actions/teams";
 import { buttonClass, inputClass } from "@/components/ui";
+import { IncognitoIcon } from "@/components/incognito-icon";
 
 export type PublicLinkActions = {
   setEnabled: typeof setPublicSubmissions;
+  setRequiresIdentity: typeof setPublicRequiresIdentity;
+  setAllowJoin: typeof setPublicAllowJoin;
   regenerate: typeof regeneratePublicLink;
 };
 
-const defaultActions: PublicLinkActions = { setEnabled: setPublicSubmissions, regenerate: regeneratePublicLink };
+const defaultActions: PublicLinkActions = {
+  setEnabled: setPublicSubmissions,
+  setRequiresIdentity: setPublicRequiresIdentity,
+  setAllowJoin: setPublicAllowJoin,
+  regenerate: regeneratePublicLink,
+};
+
+const MODES = [
+  {
+    value: false,
+    icon: <IncognitoIcon size={20} />,
+    title: "אנונימי – בלי הזדהות",
+    description: "כל מי שמחזיק בקישור יכול לשלוח, בלי להתחבר. הדיווח נשמר בלי שום שיוך לשולח.",
+  },
+  {
+    value: true,
+    icon: <span aria-hidden>🪪</span>,
+    title: "חובה להזדהות",
+    description: "הקישור פתוח לכולם, אבל כדי לשלוח צריך להתחבר עם Google. הדיווח נשמר בשם השולח.",
+  },
+] as const;
 
 type Props = {
   teamId: string;
   enabled: boolean;
+  /** Senders must sign in with Google; their entries are stored under their name. */
+  requiresIdentity?: boolean;
+  /** Visitors may sign in and join the team as regular members. */
+  allowJoin?: boolean;
   token: string;
   /** Origin used to build the shareable URL (e.g. https://mirror.example.com). */
   origin: string;
   actions?: PublicLinkActions;
 };
 
-export function PublicLinkSettings({ teamId, enabled, token, origin, actions = defaultActions }: Props) {
+export function PublicLinkSettings({
+  teamId,
+  enabled,
+  requiresIdentity = false,
+  allowJoin = false,
+  token,
+  origin,
+  actions = defaultActions,
+}: Props) {
   const [isEnabled, setIsEnabled] = useState(enabled);
+  const [identity, setIdentity] = useState(requiresIdentity);
+  const [joinAllowed, setJoinAllowed] = useState(allowJoin);
   const [currentToken, setCurrentToken] = useState(token);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +79,33 @@ export function PublicLinkSettings({ teamId, enabled, token, origin, actions = d
       const result = await actions.setEnabled(teamId, next);
       if (!result.ok) {
         setIsEnabled(previous);
+        setError(result.error);
+      }
+    });
+  }
+
+  function changeMode(next: boolean) {
+    if (next === identity) return;
+    const previous = identity;
+    setIdentity(next);
+    setError(null);
+    startTransition(async () => {
+      const result = await actions.setRequiresIdentity(teamId, next);
+      if (!result.ok) {
+        setIdentity(previous);
+        setError(result.error);
+      }
+    });
+  }
+
+  function toggleJoin(next: boolean) {
+    const previous = joinAllowed;
+    setJoinAllowed(next);
+    setError(null);
+    startTransition(async () => {
+      const result = await actions.setAllowJoin(teamId, next);
+      if (!result.ok) {
+        setJoinAllowed(previous);
         setError(result.error);
       }
     });
@@ -84,9 +153,9 @@ export function PublicLinkSettings({ teamId, enabled, token, origin, actions = d
           />
         </span>
         <span>
-          <span className="block font-semibold">מילוי ללא הזדהות</span>
+          <span className="block font-semibold">שיתוף ציבורי</span>
           <span className="block text-sm text-muted">
-            כל מי שמחזיק בקישור יוכל לשלוח דיווחים – תמיד באופן אנונימי, בלי להתחבר.
+            כל מי שמחזיק בקישור יוכל לשלוח דיווחים – גם מי שאינו חבר בצוות.
           </span>
         </span>
       </label>
@@ -100,6 +169,58 @@ export function PublicLinkSettings({ teamId, enabled, token, origin, actions = d
             className="overflow-hidden"
           >
             <div className="space-y-3 rounded-2xl border border-accent/60 bg-primary-soft p-4">
+              <fieldset disabled={pending}>
+                <legend className="mb-2 font-semibold">איך מדווחים בקישור?</legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {MODES.map((mode) => (
+                    <label
+                      key={String(mode.value)}
+                      className={`flex cursor-pointer gap-3 rounded-xl border-2 bg-surface p-3 transition ${
+                        identity === mode.value ? "border-primary" : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={`public-mode-${teamId}`}
+                        checked={identity === mode.value}
+                        onChange={() => changeMode(mode.value)}
+                        className="mt-1 accent-[var(--primary)]"
+                      />
+                      <span>
+                        <span className="flex items-center gap-1.5 font-semibold">
+                          {mode.icon} {mode.title}
+                        </span>
+                        <span className="block text-sm text-muted">{mode.description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-border bg-surface p-3 transition hover:border-primary/50 has-[:checked]:border-primary">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  checked={joinAllowed}
+                  disabled={pending}
+                  onChange={(e) => toggleJoin(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <span
+                  aria-hidden
+                  className="relative mt-0.5 inline-flex h-6 w-11 shrink-0 rounded-full bg-border transition peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-primary"
+                >
+                  <span
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${joinAllowed ? "right-[22px]" : "right-0.5"}`}
+                  />
+                </span>
+                <span>
+                  <span className="block font-semibold">🙋 הצטרפות לצוות דרך הקישור</span>
+                  <span className="block text-sm text-muted">
+                    מי שפותח את הקישור יוכל להתחבר עם Google ולבחור להצטרף כחבר צוות – בדיוק כמו חבר שנוסף כאן
+                    במסך הניהול. שימו לב: כל מי שמחזיק בקישור יוכל להצטרף.
+                  </span>
+                </span>
+              </label>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   readOnly

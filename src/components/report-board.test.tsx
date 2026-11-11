@@ -18,6 +18,19 @@ describe("ReportBoard", () => {
     expect(screen.getByRole("button", { name: /ממה הייתי עצוב/ })).toBeInTheDocument();
   });
 
+  it("uses two columns on phones once there are many fields", () => {
+    const many: ReportField[] = Array.from({ length: 5 }, (_, i) => ({ id: `m${i}`, label: `שדה ${i}`, emoji: "💡", placeholder: null }));
+    const { container, rerender } = render(<ReportBoard fields={fields} onSubmit={okSubmit()} />);
+    expect(container.querySelector("[data-layout]")).toHaveAttribute("data-layout", "comfortable");
+    rerender(<ReportBoard fields={many} onSubmit={okSubmit()} />);
+    const grid = container.querySelector("[data-layout]")!;
+    expect(grid).toHaveAttribute("data-layout", "compact");
+    expect(grid).toHaveClass("grid-cols-2");
+    // an odd last button spans the full row on phones
+    expect(screen.getByRole("button", { name: /שדה 4/ })).toHaveClass("col-span-2");
+    expect(screen.getByRole("button", { name: /שדה 3/ })).not.toHaveClass("col-span-2");
+  });
+
   it("shows an empty state without fields", () => {
     render(<ReportBoard fields={[]} onSubmit={okSubmit()} />);
     expect(screen.getByText(/לא הוגדרו שדות/)).toBeInTheDocument();
@@ -51,7 +64,7 @@ describe("ReportBoard", () => {
     const toggle = screen.getByRole("checkbox", { name: /שליחה אנונימית/ });
     expect(toggle).not.toBeChecked();
     await user.click(toggle);
-    expect(screen.getByText(/בלי שום שיוך אלייך/)).toBeInTheDocument();
+    expect(screen.getByText(/בלי שום שיוך אליך/)).toBeInTheDocument();
 
     await user.type(screen.getByRole("textbox"), "משהו קשה");
     await user.click(screen.getByRole("button", { name: /שליחה/ }));
@@ -69,6 +82,19 @@ describe("ReportBoard", () => {
     await user.type(screen.getByRole("textbox"), "טוב");
     await user.click(screen.getByRole("button", { name: /שליחה/ }));
     await waitFor(() => expect(submit).toHaveBeenCalledWith("f1", "טוב", true));
+  });
+
+  it("is never anonymous on an identified public link", async () => {
+    const user = userEvent.setup();
+    const submit = okSubmit();
+    render(<ReportBoard fields={fields} onSubmit={submit} anonymity="never" />);
+    await user.click(screen.getByRole("button", { name: /ממה אני שמח/ }));
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.getByText(/יישלח בשמך/)).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox"), "טוב");
+    await user.click(screen.getByRole("button", { name: /שליחה/ }));
+    await waitFor(() => expect(submit).toHaveBeenCalledWith("f1", "טוב", false));
+    expect(await screen.findByText("הדיווח נשלח, תודה!")).toBeInTheDocument();
   });
 
   it("keeps the dialog open and shows the server error", async () => {
