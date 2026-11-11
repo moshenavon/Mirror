@@ -55,7 +55,7 @@ export function InsightsView({ teamId, teamName, range, presets, fields, entries
                 href={`${base}?from=${p.range.from}&to=${p.range.to}`}
                 aria-current={active ? "true" : undefined}
                 className={`rounded-full border px-3.5 py-1.5 text-sm transition ${
-                  active ? "border-primary bg-primary text-white" : "border-border hover:bg-primary-soft"
+                  active ? "border-accent bg-accent text-on-accent" : "border-border hover:bg-primary-soft"
                 }`}
               >
                 {p.label} אחרונים

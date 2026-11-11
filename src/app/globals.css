@@ -1,34 +1,43 @@
 @import "tailwindcss";
 
+/* Brand: yellow #FFD02F + night navy #050038 (from the logo) */
 :root {
-  --background: #f7f7fb;
+  --background: #fffbef;
   --surface: #ffffff;
-  --foreground: #1c1b29;
-  --muted: #6b6a80;
-  --border: #e4e3ee;
-  --primary: #5b4cdb;
-  --primary-strong: #4a3cc4;
-  --primary-soft: #ecebfd;
-  --danger: #d23b4b;
-  --danger-soft: #fdeced;
-  --success: #1f9d63;
-  --success-soft: #e5f6ee;
+  --foreground: #050038;
+  --muted: #5d5a85;
+  --border: #ece5cf;
+  --primary: #050038;
+  --primary-strong: #1a1466;
+  --on-primary: #ffffff;
+  --primary-soft: #fff3c4;
+  --accent: #ffd02f;
+  --on-accent: #050038;
+  --danger: #d0263d;
+  --danger-soft: #fde8eb;
+  --success: #12805c;
+  --success-soft: #def5ec;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #12111a;
-    --surface: #1c1b27;
-    --foreground: #eeedf6;
-    --muted: #a3a2b8;
-    --border: #2f2e3d;
-    --primary: #8b7ff0;
-    --primary-strong: #a197f5;
-    --primary-soft: #2a2747;
-    --danger: #f06674;
-    --danger-soft: #3a1f25;
-    --success: #4cc790;
-    --success-soft: #173426;
+    --background: #07052e;
+    --surface: #110d45;
+    --foreground: #fff8e6;
+    --muted: #aaa6d2;
+    --border: #262070;
+    --primary: #ffd02f;
+    --primary-strong: #ffdd63;
+    --on-primary: #050038;
+    --primary-soft: #241e6b;
+    --accent: #ffd02f;
+    --on-accent: #050038;
+    --danger: #ff6b7d;
+    --danger-soft: #3b1630;
+    --success: #4fd6a2;
+    --success-soft: #0f3a3a;
+    color-scheme: dark;
   }
 }
 
@@ -40,12 +49,71 @@
   --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-strong: var(--primary-strong);
+  --color-on-primary: var(--on-primary);
   --color-primary-soft: var(--primary-soft);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --font-sans: var(--font-heebo), system-ui, sans-serif;
+
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop-in: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-float: float 3.2s ease-in-out infinite;
+  --animate-wiggle: wiggle 0.6s ease-in-out;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-6px) rotate(-3deg);
+    }
+  }
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    25% {
+      transform: rotate(-10deg) scale(1.08);
+    }
+    75% {
+      transform: rotate(8deg) scale(1.08);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: -400px 0;
+    }
+    to {
+      background-position: 400px 0;
+    }
+  }
 }
 
 body {
@@ -53,7 +121,40 @@ body {
   color: var(--foreground);
 }
 
+/* subtle brand glow behind the page */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 500px at 100% -10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%),
+    radial-gradient(700px 400px at -10% 110%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+}
+
 dialog::backdrop {
-  background: rgb(15 14 25 / 0.55);
-  backdrop-filter: blur(2px);
+  background: rgb(5 0 56 / 0.55);
+  backdrop-filter: blur(3px);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Stagger helper: style={{ "--i": index }} */
+.stagger {
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

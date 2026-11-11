@@ -29,7 +29,7 @@ export function TeamNav({ teamId, canViewInsights, isAdmin }: Props) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition ${
-              active ? "bg-primary text-white" : "text-foreground hover:bg-primary-soft"
+              active ? "bg-accent text-on-accent shadow-sm" : "text-foreground hover:bg-primary-soft"
             }`}
           >
             <span aria-hidden>{item.icon}</span>

@@ -69,7 +69,7 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
       onClick={onClick}
       aria-pressed={active}
       className={`rounded-full border px-3.5 py-1.5 text-sm transition ${
-        active ? "border-primary bg-primary text-white" : "border-border bg-surface hover:bg-primary-soft"
+        active ? "border-accent bg-accent text-on-accent" : "border-border bg-surface hover:bg-primary-soft"
       }`}
     >
       {children}

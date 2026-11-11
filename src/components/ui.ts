@@ -5,10 +5,10 @@ const base =
   "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-primary text-white hover:bg-primary-strong shadow-sm",
-  secondary: "border border-border bg-surface text-foreground hover:bg-primary-soft",
+  primary: "bg-primary text-on-primary hover:bg-primary-strong shadow-sm hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98]",
+  secondary: "border border-border bg-surface text-foreground hover:bg-primary-soft hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]",
   ghost: "text-foreground hover:bg-primary-soft",
-  danger: "bg-danger text-white hover:opacity-90",
+  danger: "bg-danger text-white hover:opacity-90 active:scale-[0.98]",
 };
 
 const sizes: Record<Size, string> = {

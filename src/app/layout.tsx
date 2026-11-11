@@ -3,6 +3,8 @@ import { Heebo } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
 import { UserMenu } from "@/components/user-menu";
+import { Logo } from "@/components/logo";
+import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const heebo = Heebo({
@@ -11,12 +13,26 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Mirror", template: "%s · Mirror" },
-  description: "איסוף תובנות צוות לאורך הזמן והצגתן בפגישת הרטרו",
+  metadataBase: new URL(siteUrl()),
+  title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    locale: "he_IL",
+  },
+  twitter: { card: "summary_large_image", title: SITE_NAME, description: SITE_DESCRIPTION },
+  appleWebApp: { title: SITE_NAME, capable: true, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#5b4cdb",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffd02f" },
+    { media: "(prefers-color-scheme: dark)", color: "#050038" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -25,8 +41,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col font-sans">
         <header className="sticky top-0 z-20 border-b border-border bg-surface/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-            <Link href="/" className="flex items-center gap-2 text-lg font-bold">
-              <span aria-hidden>🪞</span> Mirror
+            <Link href="/" className="group flex items-center gap-2.5 text-lg font-extrabold tracking-tight">
+              <Logo size={32} className="transition duration-300 group-hover:-rotate-6 group-hover:scale-110" />
+              Mirror
             </Link>
             <Suspense fallback={null}>
               <UserMenu />
