@@ -3,7 +3,8 @@ import { initials } from "@/lib/insights";
 type Props = {
   name: string;
   src?: string | null;
-  size?: number;
+  /** Pixels, or any CSS length without `em` (e.g. "calc(var(--name-size) * 1.3)"). */
+  size?: number | string;
   className?: string;
 };
 
@@ -16,15 +17,19 @@ function colorFor(name: string): string {
 }
 
 export function Avatar({ name, src, size = 40, className = "" }: Props) {
-  const style = { width: size, height: size, fontSize: Math.round(size * 0.38) };
+  const style =
+    typeof size === "number"
+      ? { width: size, height: size, fontSize: Math.round(size * 0.38) }
+      : { width: size, height: size, fontSize: `calc(${size} * 0.38)` };
+  const pixels = typeof size === "number" ? size : undefined;
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- remote Google avatars, no optimisation needed
       <img
         src={src}
         alt={name}
-        width={size}
-        height={size}
+        width={pixels}
+        height={pixels}
         referrerPolicy="no-referrer"
         className={`shrink-0 rounded-full object-cover ${className}`}
         style={style}

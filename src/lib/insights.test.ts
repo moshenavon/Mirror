@@ -7,6 +7,7 @@ import {
   initials,
   nextState,
   prevState,
+  sectionLabel,
   sectionStarts,
   type InsightEntry,
   type InsightField,
@@ -41,9 +42,36 @@ const entries = [
 describe("buildSections", () => {
   it("orders sections by field position, entries by time, and skips empty fields", () => {
     const sections = buildSections(fields, entries);
-    expect(sections.map((s) => s.field.id)).toEqual(["happy", "sad"]);
-    expect(sections[0].entries.map((e) => e.entry_id)).toEqual(["e1", "e2"]);
-    expect(sections[1].entries.map((e) => e.entry_id)).toEqual(["e3"]);
+    expect(sections.map((s) => s.kind === "field" && s.field.id)).toEqual(["happy", "sad"]);
+    expect(sections[0].items.map((i) => i.entry.entry_id)).toEqual(["e1", "e2"]);
+    expect(sections[1].items.map((i) => i.entry.entry_id)).toEqual(["e3"]);
+  });
+
+  it("groups by reporter: alphabetical, anonymous last, entries in field order then time", () => {
+    const anon = (id: string, field_id: string, created_at: string): InsightEntry => ({
+      ...entry(id, field_id, created_at),
+      is_anonymous: true,
+      author_id: null,
+      author_name: null,
+      author_email: null,
+    });
+    const mixed: InsightEntry[] = [
+      { ...entry("b1", "sad", "2026-11-01T10:00:00Z", "יוסי"), author_id: "yossi", author_email: "y@x.com" },
+      anon("a1", "learn", "2026-11-01T00:00:00Z"),
+      { ...entry("m2", "happy", "2026-11-05T10:00:00Z", "משה"), author_id: "moshe", author_email: "m@x.com" },
+      { ...entry("m1", "sad", "2026-11-01T10:00:00Z", "משה"), author_id: "moshe", author_email: "m@x.com" },
+      { ...entry("m3", "happy", "2026-11-02T10:00:00Z", "משה"), author_id: "moshe", author_email: "m@x.com" },
+      anon("a2", "happy", "2026-11-02T00:00:00Z"),
+      { ...entry("x", "unknown", "2026-11-01T10:00:00Z", "משה"), author_id: "moshe", author_email: "m@x.com" },
+    ];
+    const sections = buildSections(fields, mixed, "reporters");
+    expect(sections.map((s) => (s.kind === "reporter" ? s.reporter.name : null))).toEqual(["יוסי", "משה", "אנונימי"]);
+    expect(sections[1].items.map((i) => i.entry.entry_id)).toEqual(["m3", "m2", "m1"]);
+    expect(sections[1].items.map((i) => i.field.id)).toEqual(["happy", "happy", "sad"]);
+    expect(sections[2]).toMatchObject({ kind: "reporter", reporter: { anonymous: true, avatarUrl: null } });
+    expect(sections[2].items.map((i) => i.entry.entry_id)).toEqual(["a2", "a1"]);
+    expect(sectionLabel(sections[1])).toBe("משה");
+    expect(sectionLabel(buildSections(fields, mixed)[0])).toBe("😄 ממה אני שמח");
   });
 
   it("does not mutate its inputs", () => {

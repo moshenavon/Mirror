@@ -20,10 +20,26 @@ export type InsightEntry = {
 
 export const ANONYMOUS_NAME = "אנונימי";
 
-export type InsightSection = {
-  field: InsightField;
-  entries: InsightEntry[];
+/** How the retro walks through the entries. */
+export type PresentationOrder = "fields" | "reporters";
+
+/** Who wrote a group of entries. All anonymous entries form a single group. */
+export type Reporter = {
+  key: string;
+  name: string;
+  avatarUrl: string | null;
+  anonymous: boolean;
 };
+
+export type SectionItem = { field: InsightField; entry: InsightEntry };
+
+/**
+ * A group of slides: either all entries of one field (ordered by time),
+ * or all entries of one reporter (ordered by field position, then time).
+ */
+export type InsightSection =
+  | { kind: "field"; key: string; field: InsightField; items: SectionItem[] }
+  | { kind: "reporter"; key: string; reporter: Reporter; items: SectionItem[] };
 
 export type Slide = {
   /** Global index across all sections. */
@@ -40,34 +56,88 @@ const byPosition = (a: InsightField, b: InsightField) => a.position - b.position
 const byCreated = (a: InsightEntry, b: InsightEntry) =>
   a.created_at.localeCompare(b.created_at) || a.entry_id.localeCompare(b.entry_id);
 
-/**
- * Groups entries by field following the admin-defined field order.
- * Fields without entries are skipped; entries are ordered by creation time.
- * Entries of unknown fields are ignored.
- */
-export function buildSections(fields: InsightField[], entries: InsightEntry[]): InsightSection[] {
-  const grouped = new Map<string, InsightEntry[]>();
-  for (const entry of entries) {
-    const list = grouped.get(entry.field_id);
-    if (list) list.push(entry);
-    else grouped.set(entry.field_id, [entry]);
+export const ANONYMOUS_KEY = "anonymous";
+
+export function reporterOf(entry: InsightEntry): Reporter {
+  if (entry.is_anonymous || !entry.author_email) {
+    return { key: ANONYMOUS_KEY, name: ANONYMOUS_NAME, avatarUrl: null, anonymous: true };
   }
-  return [...fields]
-    .sort(byPosition)
-    .map((field) => ({ field, entries: [...(grouped.get(field.id) ?? [])].sort(byCreated) }))
-    .filter((section) => section.entries.length > 0);
+  return {
+    key: entry.author_id ?? entry.author_email,
+    name: displayName(entry),
+    avatarUrl: entry.author_avatar_url,
+    anonymous: false,
+  };
+}
+
+/**
+ * Groups entries for the retro.
+ * - "fields" (default): one section per field in the admin-defined order; entries by creation time.
+ * - "reporters": one section per reporter (alphabetical, anonymous last); inside, entries follow
+ *   the field order and then creation time.
+ * Empty groups are skipped and entries of unknown fields are ignored.
+ */
+export function buildSections(
+  fields: InsightField[],
+  entries: InsightEntry[],
+  order: PresentationOrder = "fields",
+): InsightSection[] {
+  const sortedFields = [...fields].sort(byPosition);
+  const rank = new Map(sortedFields.map((f, i) => [f.id, i]));
+  const items: SectionItem[] = entries
+    .filter((entry) => rank.has(entry.field_id))
+    .map((entry) => ({ entry, field: sortedFields[rank.get(entry.field_id)!] }));
+
+  if (order === "fields") {
+    return sortedFields
+      .map((field) => ({
+        kind: "field" as const,
+        key: field.id,
+        field,
+        items: items.filter((i) => i.field.id === field.id).sort((a, b) => byCreated(a.entry, b.entry)),
+      }))
+      .filter((section) => section.items.length > 0);
+  }
+
+  const groups = new Map<string, { reporter: Reporter; items: SectionItem[] }>();
+  for (const item of items) {
+    const reporter = reporterOf(item.entry);
+    const group = groups.get(reporter.key);
+    if (group) group.items.push(item);
+    else groups.set(reporter.key, { reporter, items: [item] });
+  }
+  return [...groups.values()]
+    .sort(
+      (a, b) =>
+        Number(a.reporter.anonymous) - Number(b.reporter.anonymous) ||
+        a.reporter.name.localeCompare(b.reporter.name, "he") ||
+        a.reporter.key.localeCompare(b.reporter.key),
+    )
+    .map(({ reporter, items: list }) => ({
+      kind: "reporter" as const,
+      key: reporter.key,
+      reporter,
+      items: [...list].sort(
+        (a, b) => rank.get(a.field.id)! - rank.get(b.field.id)! || byCreated(a.entry, b.entry),
+      ),
+    }));
+}
+
+/** Emoji/avatar-less label of a section, e.g. for the jump menu. */
+export function sectionLabel(section: InsightSection): string {
+  return section.kind === "field" ? `${section.field.emoji} ${section.field.label}` : section.reporter.name;
 }
 
 export function flattenSlides(sections: InsightSection[]): Slide[] {
   const slides: Slide[] = [];
   sections.forEach((section, sectionIndex) => {
-    section.entries.forEach((entry, indexInSection) => {
+    section.items.forEach(({ entry, field }, indexInSection) => {
       slides.push({
         index: slides.length,
         sectionIndex,
         indexInSection,
-        sectionSize: section.entries.length,
-        field: section.field,
+        sectionSize: section.items.length,
+        field,
         entry,
       });
     });
@@ -81,7 +151,7 @@ export function sectionStarts(sections: InsightSection[]): number[] {
   let acc = 0;
   for (const section of sections) {
     starts.push(acc);
-    acc += section.entries.length;
+    acc += section.items.length;
   }
   return starts;
 }
