@@ -23,41 +23,41 @@
 /* Dark: follows the system unless the user picked a theme (data-theme on <html>). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #07052e;
-    --surface: #110d45;
+    --background: #030219;
+    --surface: #0a0830;
     --foreground: #fff8e6;
-    --muted: #aaa6d2;
-    --border: #262070;
-    --primary: #ffd02f;
-    --primary-strong: #ffdd63;
+    --muted: #9d99c8;
+    --border: #1b1758;
+    --primary: #f0bf1c;
+    --primary-strong: #ffd02f;
     --on-primary: #050038;
-    --primary-soft: #241e6b;
+    --primary-soft: #17124a;
     --accent: #ffd02f;
     --on-accent: #050038;
     --danger: #ff6b7d;
-    --danger-soft: #3b1630;
+    --danger-soft: #2a0e22;
     --success: #4fd6a2;
-    --success-soft: #0f3a3a;
+    --success-soft: #0a2826;
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --background: #07052e;
-  --surface: #110d45;
+  --background: #030219;
+  --surface: #0a0830;
   --foreground: #fff8e6;
-  --muted: #aaa6d2;
-  --border: #262070;
-  --primary: #ffd02f;
-  --primary-strong: #ffdd63;
+  --muted: #9d99c8;
+  --border: #1b1758;
+  --primary: #f0bf1c;
+  --primary-strong: #ffd02f;
   --on-primary: #050038;
-  --primary-soft: #241e6b;
+  --primary-soft: #17124a;
   --accent: #ffd02f;
   --on-accent: #050038;
   --danger: #ff6b7d;
-  --danger-soft: #3b1630;
+  --danger-soft: #2a0e22;
   --success: #4fd6a2;
-  --success-soft: #0f3a3a;
+  --success-soft: #0a2826;
   color-scheme: dark;
 }
 
