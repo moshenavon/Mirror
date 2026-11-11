@@ -22,14 +22,17 @@ async function TeamHeader({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const { team } = await getTeamContext(teamId);
   return (
-    <div className="mb-6 animate-fade-up space-y-3 sm:mb-8">
+    // RTL: the back button comes first, so it sits to the right of the team name.
+    <div className="mb-6 flex animate-fade-up items-center gap-3 sm:mb-8">
       <Link
         href="/"
-        className="inline-flex items-center gap-1 text-sm font-semibold text-muted transition hover:text-foreground"
+        aria-label="כל הצוותים"
+        title="כל הצוותים"
+        className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-xl font-bold text-muted shadow-sm transition hover:bg-primary-soft hover:text-foreground sm:size-11"
       >
-        <span aria-hidden>→</span> כל הצוותים
+        <span aria-hidden>→</span>
       </Link>
-      <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{team.name}</h1>
+      <h1 className="min-w-0 break-words text-3xl font-extrabold tracking-tight sm:text-4xl">{team.name}</h1>
     </div>
   );
 }
