@@ -6,8 +6,8 @@
 |---|-------|:----:|
 | 1 | אפיון ומשימות (`docs/SPEC.md`, `docs/TASKS.md`) | ✅ |
 | 2 | שלד פרויקט: Next.js + TypeScript + Tailwind + Vitest + ESLint, RTL ועברית | ✅ |
-| 3 | סכמת מסד נתונים ב-Supabase: טבלאות, אינדקסים, טריגרים, RLS, RPC + קובץ migration בריפו | ⬜ |
-| 4 | בדיקות RLS ב-SQL מול Supabase (סימולציית משתמשים) | ⬜ |
+| 3 | סכמת מסד נתונים ב-Supabase: טבלאות, אינדקסים, טריגרים, RLS, RPC + קובץ migration בריפו | ✅ |
+| 4 | בדיקות RLS ב-SQL מול Supabase (סימולציית משתמשים) | 🟡 |
 | 5 | שכבת Supabase בצד ה-Next: clients (browser/server), proxy לרענון session, טיפוסים | ⬜ |
 | 6 | הזדהות Google: עמוד login, callback, logout, הגנת נתיבים | ⬜ |
 | 7 | לוגיקה טהורה + unit tests: ולידציה, פענוח מיילים, טווחי תאריכים, בניית שקפי תובנות, סידור שדות | ⬜ |
