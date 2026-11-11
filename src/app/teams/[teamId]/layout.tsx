@@ -28,10 +28,11 @@ async function TeamHeader({ params }: { params: Promise<{ teamId: string }> }) {
         href="/"
         aria-label="כל הצוותים"
         title="כל הצוותים"
-        className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-xl font-bold text-muted shadow-sm transition hover:bg-primary-soft hover:text-foreground sm:size-11"
+        className="inline-flex shrink-0 items-center justify-center text-2xl font-bold text-muted transition hover:text-foreground sm:text-3xl"
       >
         <span aria-hidden>→</span>
       </Link>
+      <span aria-hidden className="h-8 w-px shrink-0 bg-border sm:h-10" />
       <h1 className="min-w-0 break-words text-3xl font-extrabold tracking-tight sm:text-4xl">{team.name}</h1>
     </div>
   );
