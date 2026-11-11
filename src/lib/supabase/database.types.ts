@@ -156,6 +156,7 @@ export type Database = {
           name: string;
           public_submissions_enabled: boolean;
           public_requires_identity: boolean;
+          public_allow_join: boolean;
           updated_at: string;
         };
         Insert: never;
@@ -165,6 +166,7 @@ export type Database = {
           name?: string;
           public_submissions_enabled?: boolean;
           public_requires_identity?: boolean;
+          public_allow_join?: boolean;
         };
         Relationships: [];
       };
@@ -211,6 +213,7 @@ export type Database = {
           name: string;
           public_submissions_enabled: boolean;
           public_requires_identity: boolean;
+          public_allow_join: boolean;
           public_token: string | null;
           role: TeamRole;
         }[];
@@ -230,6 +233,10 @@ export type Database = {
       get_public_form: {
         Args: { p_token: string };
         Returns: Json;
+      };
+      join_team_via_link: {
+        Args: { p_token: string };
+        Returns: string;
       };
       submit_public_entry: {
         Args: { p_token: string; p_field_id: string; p_content: string };

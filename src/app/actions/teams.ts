@@ -113,6 +113,21 @@ export async function setPublicRequiresIdentity(teamId: string, required: boolea
   return ok();
 }
 
+export async function setPublicAllowJoin(teamId: string, allowed: boolean): Promise<ActionResult> {
+  if (!uuidSchema.safeParse(teamId).success) return fail("צוות לא תקין");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("teams")
+    .update({ public_allow_join: Boolean(allowed) })
+    .eq("id", teamId)
+    .select("id");
+  if (error) return fail(dbErrorMessage(error));
+  if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
+  updateTag(cacheTags.team(teamId));
+  refresh();
+  return ok();
+}
+
 export async function regeneratePublicLink(teamId: string): Promise<ActionResult<{ token: string }>> {
   if (!uuidSchema.safeParse(teamId).success) return fail("צוות לא תקין");
   const supabase = await createClient();

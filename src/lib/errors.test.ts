@@ -7,6 +7,7 @@ describe("dbErrorMessage", () => {
     expect(dbErrorMessage({ code: "P0001", message: "Field is not active" })).toContain("לא פעיל");
     expect(dbErrorMessage({ code: "P0001", hint: "link_disabled" })).toContain("הקישור");
     expect(dbErrorMessage({ code: "28000", hint: "identity_required" })).toContain("להתחבר עם Google");
+    expect(dbErrorMessage({ code: "P0001", hint: "join_disabled" })).toContain("ההצטרפות");
     expect(dbErrorMessage({ code: "23505" })).toBe("הרשומה כבר קיימת");
     expect(dbErrorMessage({ code: "23503" })).toContain("קיימים דיווחים");
     expect(dbErrorMessage({ code: "42501" })).toContain("הרשאה");

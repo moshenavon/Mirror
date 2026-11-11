@@ -5,10 +5,11 @@ import { PublicLinkSettings } from "./public-link-settings";
 
 const TOKEN = "a".repeat(64);
 
-function setup(enabled = false, requiresIdentity = false) {
+function setup(enabled = false, requiresIdentity = false, allowJoin = false) {
   const actions = {
     setEnabled: vi.fn(async () => ({ ok: true as const })),
     setRequiresIdentity: vi.fn(async () => ({ ok: true as const })),
+    setAllowJoin: vi.fn(async () => ({ ok: true as const })),
     regenerate: vi.fn(async () => ({ ok: true as const, data: { token: "b".repeat(64) } })),
   };
   render(
@@ -16,6 +17,7 @@ function setup(enabled = false, requiresIdentity = false) {
       teamId="t1"
       enabled={enabled}
       requiresIdentity={requiresIdentity}
+      allowJoin={allowJoin}
       token={TOKEN}
       origin="https://mirror.app"
       actions={actions}
@@ -59,6 +61,23 @@ describe("PublicLinkSettings", () => {
     await user.click(screen.getByRole("radio", { name: /חובה להזדהות/ }));
     expect(await screen.findByRole("alert")).toHaveTextContent("אין הרשאה");
     expect(screen.getByRole("radio", { name: /אנונימי/ })).toBeChecked();
+  });
+
+  it("lets visitors join the team through the link", async () => {
+    const { user, actions } = setup(true);
+    const joinSwitch = screen.getByRole("switch", { name: /הצטרפות לצוות דרך הקישור/ });
+    expect(joinSwitch).not.toBeChecked();
+    await user.click(joinSwitch);
+    await waitFor(() => expect(actions.setAllowJoin).toHaveBeenCalledWith("t1", true));
+    expect(joinSwitch).toBeChecked();
+  });
+
+  it("reverts the join switch when saving fails", async () => {
+    const { user, actions } = setup(true, false, true);
+    actions.setAllowJoin.mockResolvedValueOnce({ ok: false, error: "אין הרשאה" } as never);
+    await user.click(screen.getByRole("switch", { name: /הצטרפות לצוות דרך הקישור/ }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("אין הרשאה");
+    expect(screen.getByRole("switch", { name: /הצטרפות לצוות דרך הקישור/ })).toBeChecked();
   });
 
   it("copies the link", async () => {

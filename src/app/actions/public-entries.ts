@@ -1,6 +1,10 @@
 "use server";
 
+import { redirect } from "next/navigation";
+import { updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getOptionalUser } from "@/lib/data";
+import { cacheTags } from "@/lib/cache-tags";
 import { dbErrorMessage } from "@/lib/errors";
 import { entryContentSchema, firstError, publicTokenSchema, uuidSchema } from "@/lib/validation";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
@@ -25,4 +29,22 @@ export async function submitPublicEntry(token: string, fieldId: string, content:
   });
   if (error) return fail(dbErrorMessage(error, "שליחת הדיווח נכשלה"));
   return ok();
+}
+
+/**
+ * The signed-in visitor joins the team behind a public link (when the admin
+ * allowed it) and lands on the team's report screen as a regular member.
+ */
+export async function joinTeamViaLink(token: string): Promise<ActionResult> {
+  if (!publicTokenSchema.safeParse(token).success) return fail("הקישור אינו תקין");
+  const user = await getOptionalUser();
+  if (!user) return fail(dbErrorMessage({ hint: "identity_required" }));
+
+  const supabase = await createClient();
+  const { data: teamId, error } = await supabase.rpc("join_team_via_link", { p_token: token });
+  if (error || !teamId) return fail(dbErrorMessage(error, "ההצטרפות לצוות נכשלה"));
+
+  updateTag(cacheTags.teamsOf(user.email));
+  updateTag(cacheTags.team(teamId));
+  redirect(`/teams/${teamId}`);
 }

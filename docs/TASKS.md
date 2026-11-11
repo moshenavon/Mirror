@@ -52,6 +52,8 @@
 | 32 | 10 אימוג'י מונפשים נוספים (סה"כ 20) | ✅ |
 | 33 | ניווט: "הצוותים שלי" בכותרת העליונה + "כל הצוותים" במסכי הצוות | ✅ |
 | 34 | ביצועים: קאש בשרת (`use cache: remote`) לרשימת הצוותים ולשדות, ריענון ברקע, ביטול לפי תגיות בכל פעולת כתיבה; טעינה מקבילית; קאש 30 שניות בדפדפן | ✅ |
+| 35 | קישור ציבורי: אפשרות הצטרפות לצוות (מתחברים עם Google ומצטרפים כחבר רגיל) + בדיקות RLS | ✅ |
+| 36 | 🧑 להחיל את המיגרציה `20261111210000_public_link_join.sql` ב-Supabase | 🧑 |
 
 ## פעולות שנדרשות מהמשתמש (בסוף)
 
@@ -59,6 +61,7 @@
    `supabase/migrations/20261111150000_own_auth_anonymous_public.sql`.
    ואחריה את `supabase/migrations/20261111180000_achievements.sql` (מסך ההישגים).
    ואחריה את `supabase/migrations/20261111200000_public_link_identity.sql` (קישור ציבורי עם חובת הזדהות).
+   ואחריה את `supabase/migrations/20261111210000_public_link_join.sql` (הצטרפות לצוות דרך הקישור).
    אחר כך להריץ את `supabase/tests/rls_test.sql` → צפוי `ALL RLS TESTS PASSED`.
 2. **Google Cloud Console** → APIs & Services → Credentials → Create OAuth client ID → Web application:
    - Authorized JavaScript origins: `https://mirror-six-gray.vercel.app`, `http://localhost:3000`

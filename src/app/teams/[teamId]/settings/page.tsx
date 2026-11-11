@@ -100,6 +100,7 @@ async function Settings({
           teamId={team.id}
           enabled={team.public_submissions_enabled}
           requiresIdentity={team.public_requires_identity}
+          allowJoin={team.public_allow_join}
           token={team.public_token ?? ""}
           origin={origin}
         />

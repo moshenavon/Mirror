@@ -7,6 +7,7 @@ export function dbErrorMessage(error: DbError, fallback = "אירעה שגיאה
   if (hint === "last_admin" || message?.includes("at least one admin")) return "בצוות חייב להישאר לפחות מנהל אחד";
   if (hint === "field_inactive" || message?.includes("Field is not active")) return "השדה הזה כבר לא פעיל";
   if (hint === "link_disabled" || message?.includes("Public link is disabled")) return "הקישור הזה כבר לא פעיל";
+  if (hint === "join_disabled" || message?.includes("Joining through this link is disabled")) return "ההצטרפות לצוות דרך הקישור הזה לא פעילה";
   if (hint === "identity_required" || message?.includes("Sign-in required")) return "כדי לדווח בקישור הזה צריך להתחבר עם Google";
   switch (code) {
     case "23505":

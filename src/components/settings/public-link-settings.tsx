@@ -2,19 +2,26 @@
 
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { regeneratePublicLink, setPublicRequiresIdentity, setPublicSubmissions } from "@/app/actions/teams";
+import {
+  regeneratePublicLink,
+  setPublicAllowJoin,
+  setPublicRequiresIdentity,
+  setPublicSubmissions,
+} from "@/app/actions/teams";
 import { buttonClass, inputClass } from "@/components/ui";
 import { IncognitoIcon } from "@/components/incognito-icon";
 
 export type PublicLinkActions = {
   setEnabled: typeof setPublicSubmissions;
   setRequiresIdentity: typeof setPublicRequiresIdentity;
+  setAllowJoin: typeof setPublicAllowJoin;
   regenerate: typeof regeneratePublicLink;
 };
 
 const defaultActions: PublicLinkActions = {
   setEnabled: setPublicSubmissions,
   setRequiresIdentity: setPublicRequiresIdentity,
+  setAllowJoin: setPublicAllowJoin,
   regenerate: regeneratePublicLink,
 };
 
@@ -38,6 +45,8 @@ type Props = {
   enabled: boolean;
   /** Senders must sign in with Google; their entries are stored under their name. */
   requiresIdentity?: boolean;
+  /** Visitors may sign in and join the team as regular members. */
+  allowJoin?: boolean;
   token: string;
   /** Origin used to build the shareable URL (e.g. https://mirror.example.com). */
   origin: string;
@@ -48,12 +57,14 @@ export function PublicLinkSettings({
   teamId,
   enabled,
   requiresIdentity = false,
+  allowJoin = false,
   token,
   origin,
   actions = defaultActions,
 }: Props) {
   const [isEnabled, setIsEnabled] = useState(enabled);
   const [identity, setIdentity] = useState(requiresIdentity);
+  const [joinAllowed, setJoinAllowed] = useState(allowJoin);
   const [currentToken, setCurrentToken] = useState(token);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +93,19 @@ export function PublicLinkSettings({
       const result = await actions.setRequiresIdentity(teamId, next);
       if (!result.ok) {
         setIdentity(previous);
+        setError(result.error);
+      }
+    });
+  }
+
+  function toggleJoin(next: boolean) {
+    const previous = joinAllowed;
+    setJoinAllowed(next);
+    setError(null);
+    startTransition(async () => {
+      const result = await actions.setAllowJoin(teamId, next);
+      if (!result.ok) {
+        setJoinAllowed(previous);
         setError(result.error);
       }
     });
@@ -172,6 +196,31 @@ export function PublicLinkSettings({
                   ))}
                 </div>
               </fieldset>
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-border bg-surface p-3 transition hover:border-primary/50 has-[:checked]:border-primary">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  checked={joinAllowed}
+                  disabled={pending}
+                  onChange={(e) => toggleJoin(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <span
+                  aria-hidden
+                  className="relative mt-0.5 inline-flex h-6 w-11 shrink-0 rounded-full bg-border transition peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-primary"
+                >
+                  <span
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${joinAllowed ? "right-[22px]" : "right-0.5"}`}
+                  />
+                </span>
+                <span>
+                  <span className="block font-semibold">🙋 הצטרפות לצוות דרך הקישור</span>
+                  <span className="block text-sm text-muted">
+                    מי שפותח את הקישור יוכל להתחבר עם Google ולבחור להצטרף כחבר צוות – בדיוק כמו חבר שנוסף כאן
+                    במסך הניהול. שימו לב: כל מי שמחזיק בקישור יוכל להצטרף.
+                  </span>
+                </span>
+              </label>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   readOnly

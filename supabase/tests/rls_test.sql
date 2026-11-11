@@ -346,6 +346,96 @@ begin
   end;
 end $$;
 
+-- ---------- joining the team through the public link ----------
+-- carol (still an outsider) cannot join while joining is off
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_token text := (select v from t_ctx where k = 'token');
+begin
+  assert not (public.get_public_form(v_token) ->> 'allow_join')::boolean, 'joining is off by default';
+  assert public.get_public_form(v_token) -> 'member_team_id' = 'null'::jsonb, 'outsider is not reported as member';
+  begin
+    perform public.join_team_via_link(v_token);
+    raise exception 'joined while joining is off';
+  exception when sqlstate 'P0001' then
+    if sqlerrm not like '%Joining%' then raise; end if;
+  end;
+end $$;
+
+-- alice (member) cannot enable joining; bob (admin) can
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+  v_n int;
+begin
+  update public.teams set public_allow_join = true where id = v_team;
+  get diagnostics v_n = row_count; assert v_n = 0, 'non-admin cannot allow joining';
+end $$;
+
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+begin
+  update public.teams set public_allow_join = true where id = v_team;
+  assert (select public_allow_join from public.my_teams() where id = v_team), 'admin allows joining';
+end $$;
+
+-- anon cannot join (must sign in)
+reset role;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role anon;
+do $$ begin
+  assert (public.get_public_form((select v from t_ctx where k = 'token')) ->> 'allow_join')::boolean, 'form tells joining is allowed';
+  begin
+    perform public.join_team_via_link((select v from t_ctx where k = 'token'));
+    raise exception 'anon joined';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+-- unknown subject (no profile) cannot join
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000ff","role":"authenticated"}', true);
+set local role authenticated;
+do $$ begin
+  begin
+    perform public.join_team_via_link((select v from t_ctx where k = 'token'));
+    raise exception 'unknown subject joined';
+  exception when sqlstate '28000' then null;
+  end;
+end $$;
+
+-- carol joins and becomes a regular member
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+  v_token text := (select v from t_ctx where k = 'token');
+  v_field uuid := (select v::uuid from t_ctx where k = 'field');
+  v_n int;
+begin
+  assert public.join_team_via_link(v_token) = v_team, 'join returns the team';
+  assert public.join_team_via_link(v_token) = v_team, 'joining twice is harmless';
+  assert (select count(*) from public.team_members where team_id = v_team and email = 'carol@example.com') = 1, 'carol added once';
+  assert (select role from public.my_teams() where id = v_team) = 'member', 'carol joined as member';
+  assert (select public_token from public.my_teams() where id = v_team) is null, 'joined member does not see the token';
+  assert (public.get_public_form(v_token) ->> 'member_team_id')::uuid = v_team, 'form reports carol as member';
+  assert (select count(*) from public.team_fields where team_id = v_team) = 4, 'carol reads fields like any member';
+  update public.teams set public_allow_join = false where id = v_team;
+  get diagnostics v_n = row_count; assert v_n = 0, 'joined member cannot change settings';
+end $$;
+
 -- ---------- bob (now admin): insights allowed, regenerate link, cleanup ----------
 reset role;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);

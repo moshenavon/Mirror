@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { createAnonClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { publicTokenSchema } from "@/lib/validation";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { ReportBoard, type ReportField } from "@/components/report-board";
@@ -11,6 +11,7 @@ import { getOptionalUser } from "@/lib/data";
 import { submitPublicEntry } from "@/app/actions/public-entries";
 import { GoogleSignInButton } from "@/app/login/google-sign-in-button";
 import { IncognitoIcon } from "@/components/incognito-icon";
+import { JoinTeamCard } from "@/components/join-team-card";
 
 export const metadata: Metadata = {
   title: "שיתוף תובנה",
@@ -20,6 +21,9 @@ export const metadata: Metadata = {
 type PublicForm = {
   team_name: string;
   requires_identity?: boolean;
+  allow_join?: boolean;
+  /** Set only when the visitor is already a member of the team. */
+  member_team_id?: string | null;
   fields: (ReportField & { position: number })[];
 };
 
@@ -38,7 +42,8 @@ async function PublicReport({ params }: { params: Promise<{ token: string }> }) 
   if (!publicTokenSchema.safeParse(token).success) notFound();
 
   const [{ data }, user] = await Promise.all([
-    createAnonClient().rpc("get_public_form", { p_token: token }),
+    // As the visitor when signed in (so the form can tell whether they are a member), else as anon.
+    createClient().then((supabase) => supabase.rpc("get_public_form", { p_token: token })),
     getOptionalUser(),
   ]);
   const form = data as PublicForm | null;
@@ -53,6 +58,11 @@ async function PublicReport({ params }: { params: Promise<{ token: string }> }) 
   }
 
   const fields = form.fields.map((f) => ({ id: f.id, label: f.label, emoji: f.emoji, placeholder: f.placeholder }));
+  const joinCard = form.member_team_id ? (
+    <JoinTeamCard token={token} teamName={form.team_name} status="member" teamHref={`/teams/${form.member_team_id}`} />
+  ) : form.allow_join ? (
+    <JoinTeamCard token={token} teamName={form.team_name} status={user ? "signed-in" : "signed-out"} />
+  ) : null;
 
   if (form.requires_identity) {
     if (!user) {
@@ -62,6 +72,7 @@ async function PublicReport({ params }: { params: Promise<{ token: string }> }) 
           <p className="mt-4 text-sm font-semibold text-muted">שיתוף עבור</p>
           <h1 className="text-3xl font-extrabold">{form.team_name}</h1>
           <p className="mt-3 text-lg text-muted">כדי לדווח בקישור הזה צריך להזדהות. הדיווחים יישמרו בשמך.</p>
+          {form.allow_join && <p className="mt-2 text-muted">🙋 אחרי ההתחברות אפשר גם להצטרף לצוות.</p>}
           <div className="mt-8">
             <GoogleSignInButton next={`/r/${token}`} />
           </div>
@@ -71,6 +82,7 @@ async function PublicReport({ params }: { params: Promise<{ token: string }> }) 
 
     return (
       <section>
+        {joinCard}
         <div className="mb-8 animate-fade-up">
           <p className="text-sm font-semibold text-muted">שיתוף עבור</p>
           <h1 className="text-3xl font-extrabold sm:text-4xl">{form.team_name}</h1>
@@ -87,6 +99,7 @@ async function PublicReport({ params }: { params: Promise<{ token: string }> }) 
 
   return (
     <section>
+      {joinCard}
       <div className="mb-8 animate-fade-up">
         <p className="text-sm font-semibold text-muted">שיתוף אנונימי עבור</p>
         <h1 className="text-3xl font-extrabold sm:text-4xl">{form.team_name}</h1>

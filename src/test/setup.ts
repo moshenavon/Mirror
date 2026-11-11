@@ -49,10 +49,12 @@ vi.mock("@/app/actions/teams", () => ({
   deleteTeam: vi.fn(async () => ({ ok: true })),
   setPublicSubmissions: vi.fn(async () => ({ ok: true })),
   setPublicRequiresIdentity: vi.fn(async () => ({ ok: true })),
+  setPublicAllowJoin: vi.fn(async () => ({ ok: true })),
   regeneratePublicLink: vi.fn(async () => ({ ok: true, data: { token: "f".repeat(64) } })),
 }));
 vi.mock("@/app/actions/public-entries", () => ({
   submitPublicEntry: vi.fn(async () => ({ ok: true })),
+  joinTeamViaLink: vi.fn(async () => ({ ok: true })),
 }));
 
 // Heavy browser-only animation libraries are stubbed.
