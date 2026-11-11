@@ -11,7 +11,7 @@ type Props = { name: string; avatarUrl?: string | null };
 const itemClass =
   "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-start text-sm font-medium text-foreground transition hover:bg-primary-soft focus-visible:bg-primary-soft focus-visible:outline-none";
 
-/** Profile picture that opens a floating menu with "my teams", dark mode and sign-out. */
+/** Profile picture that opens a floating menu with "my teams", dark mode, credits and sign-out. */
 export function UserMenuDropdown({ name, avatarUrl }: Props) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -58,6 +58,9 @@ export function UserMenuDropdown({ name, avatarUrl }: Props) {
             <span aria-hidden>👥</span> הצוותים שלי
           </Link>
           <ThemeToggleItem />
+          <Link href="/credits" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
+            <span aria-hidden>🙏</span> קרדיטים
+          </Link>
           <form action={signOut}>
             <button type="submit" role="menuitem" className={itemClass}>
               <span aria-hidden>🚪</span> התנתק

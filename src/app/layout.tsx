@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffd02f" },
-    { media: "(prefers-color-scheme: dark)", color: "#050038" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0830" },
   ],
 };
 
@@ -62,11 +62,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <MotionProvider>
           <div className="flex flex-1 flex-col">{children}</div>
         </MotionProvider>
-        <footer className="py-6 text-center text-xs text-muted">
-          <Link href="/credits" className="underline-offset-2 hover:underline">
-            קרדיטים
-          </Link>
-        </footer>
       </body>
     </html>
   );

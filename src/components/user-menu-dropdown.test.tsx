@@ -11,6 +11,7 @@ describe("UserMenuDropdown", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "תפריט משתמש" }));
     expect(screen.getByRole("menuitem", { name: /הצוותים שלי/ })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("menuitem", { name: /קרדיטים/ })).toHaveAttribute("href", "/credits");
     expect(screen.getByRole("menuitem", { name: /התנתק/ })).toBeInTheDocument();
 
     const toggle = screen.getByRole("menuitemcheckbox", { name: /מצב כהה/ });
