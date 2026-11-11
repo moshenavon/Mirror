@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import { UserMenu } from "@/components/user-menu";
 import { Logo } from "@/components/logo";
 import { MotionProvider } from "@/components/motion-provider";
+import { ThemeSync } from "@/components/theme-sync";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { ThemeColorGuard } from "@/components/theme-color-guard";
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import "./globals.css";
@@ -39,8 +41,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="he" dir="rtl" className={`${heebo.variable} h-full antialiased`}>
+    <html lang="he" dir="rtl" className={`${heebo.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
+        <ThemeSync />
         <ThemeColorGuard />
         <header className="sticky top-0 z-20 border-b border-border bg-surface/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
@@ -57,16 +63,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="flex flex-1 flex-col">{children}</div>
         </MotionProvider>
         <footer className="py-6 text-center text-xs text-muted">
-          אימוג&apos;י מונפשים:{" "}
-          <a
-            href="https://googlefonts.github.io/noto-emoji-animation/"
-            className="underline-offset-2 hover:underline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Noto Emoji Animation
-          </a>{" "}
-          (CC BY 4.0)
+          <Link href="/credits" className="underline-offset-2 hover:underline">
+            קרדיטים
+          </Link>
         </footer>
       </body>
     </html>

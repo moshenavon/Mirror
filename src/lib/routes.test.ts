@@ -7,6 +7,7 @@ describe("routes", () => {
     expect(isPublicPath("/auth/callback")).toBe(true);
     expect(isPublicPath("/auth/google")).toBe(true);
     expect(isPublicPath("/r/abc")).toBe(true);
+    expect(isPublicPath("/credits")).toBe(true);
     expect(isPublicPath("/rx")).toBe(false);
     expect(isPublicPath("/loginx")).toBe(false);
     expect(isPublicPath("/")).toBe(false);

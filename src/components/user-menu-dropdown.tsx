@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { signOut } from "@/app/actions/auth";
+import { applyTheme, currentTheme, type Theme } from "@/lib/theme";
 import { Avatar } from "./avatar";
 
 type Props = { name: string; avatarUrl?: string | null };
@@ -10,7 +11,7 @@ type Props = { name: string; avatarUrl?: string | null };
 const itemClass =
   "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-start text-sm font-medium text-foreground transition hover:bg-primary-soft focus-visible:bg-primary-soft focus-visible:outline-none";
 
-/** Profile picture that opens a floating menu with "my teams" and sign-out. */
+/** Profile picture that opens a floating menu with "my teams", dark mode and sign-out. */
 export function UserMenuDropdown({ name, avatarUrl }: Props) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -56,6 +57,7 @@ export function UserMenuDropdown({ name, avatarUrl }: Props) {
           <Link href="/" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
             <span aria-hidden>👥</span> הצוותים שלי
           </Link>
+          <ThemeToggleItem />
           <form action={signOut}>
             <button type="submit" role="menuitem" className={itemClass}>
               <span aria-hidden>🚪</span> התנתק
@@ -64,5 +66,26 @@ export function UserMenuDropdown({ name, avatarUrl }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Mounted only while the menu is open, so reading the DOM in the initializer is safe. */
+function ThemeToggleItem() {
+  const [theme, setTheme] = useState<Theme>(currentTheme);
+  const dark = theme === "dark";
+  return (
+    <button
+      type="button"
+      role="menuitemcheckbox"
+      aria-checked={dark}
+      className={itemClass}
+      onClick={() => {
+        const next: Theme = dark ? "light" : "dark";
+        applyTheme(next);
+        setTheme(next);
+      }}
+    >
+      <span aria-hidden>{dark ? "☀️" : "🌙"}</span> {dark ? "מצב בהיר" : "מצב כהה"}
+    </button>
   );
 }
