@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f7fb;
+  --surface: #ffffff;
+  --foreground: #1c1b29;
+  --muted: #6b6a80;
+  --border: #e4e3ee;
+  --primary: #5b4cdb;
+  --primary-strong: #4a3cc4;
+  --primary-soft: #ecebfd;
+  --danger: #d23b4b;
+  --danger-soft: #fdeced;
+  --success: #1f9d63;
+  --success-soft: #e5f6ee;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #12111a;
+    --surface: #1c1b27;
+    --foreground: #eeedf6;
+    --muted: #a3a2b8;
+    --border: #2f2e3d;
+    --primary: #8b7ff0;
+    --primary-strong: #a197f5;
+    --primary-soft: #2a2747;
+    --danger: #f06674;
+    --danger-soft: #3a1f25;
+    --success: #4cc790;
+    --success-soft: #173426;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --font-sans: var(--font-heebo), system-ui, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+dialog::backdrop {
+  background: rgb(15 14 25 / 0.55);
+  backdrop-filter: blur(2px);
+}
