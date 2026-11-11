@@ -23,6 +23,19 @@
 
 **Production:** https://mirror-six-gray.vercel.app (פרויקט Vercel: `mirror`, צוות MOSHE)
 
+## שלב 2
+
+| # | משימה | סטטוס |
+|---|-------|:----:|
+| 17 | מיתוג: צבעים מהלוגו, אייקון אפליקציה, favicon, תמונת שיתוף (OG), manifest | ⬜ |
+| 18 | הזדהות Google ישירה (Google Cloud OAuth) בלי Supabase Auth: session משלנו + JWT ל-RLS | ⬜ |
+| 19 | שליחה אנונימית – ללא שום שיוך למשתמש במסד הנתונים | ⬜ |
+| 20 | קישור ציבורי למילוי ללא הזדהות (מנהל מפעיל/מבטל/מחליף קישור) | ⬜ |
+| 21 | 10 אימוג'י תלת-ממדיים מונפשים (Noto Animated, Lottie) + בוחר אימוג'י | ⬜ |
+| 22 | אנימציות בכל המערכת (כניסה, ריחוף, מעברים, מצגת, קונפטי) | ⬜ |
+| 23 | עדכון בדיקות (unit, קומפוננטות, RLS) | ⬜ |
+| 24 | דיפלוי + משתני סביבה | ⬜ |
+
 ## פעולות שנדרשות מהמשתמש (בסוף)
 1. **Google Cloud Console** – יצירת OAuth Client ID (Web application):
    - Authorized redirect URI: `https://kcpbotofdgdrwvuclwck.supabase.co/auth/v1/callback`
