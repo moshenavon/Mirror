@@ -33,7 +33,7 @@ export const LEVELS: readonly Level[] = [
   },
   {
     index: 2,
-    threshold: 20,
+    threshold: 25,
     emoji: "🕵️",
     title: "בלש התובנות",
     tagline: "שום דבר לא חומק מהעין שלך. אפילו לא הקפה שנגמר במטבחון.",
@@ -54,6 +54,14 @@ export const LEVELS: readonly Level[] = [
     title: "מלך הדיווחים",
     tagline: "מוביל את הצוות למקומות הכי טובים. כתר, גלימה, ותור משלך למיקרוגל.",
     emptyText: "הכתר מחכה לבעליו…",
+  },
+  {
+    index: 5,
+    threshold: 200,
+    emoji: "🌟",
+    title: "אגדת הרטרו",
+    tagline: "200 דיווחים! מספרים עליך סיפורים במטבחון, והרטרו כבר לא נראה אותו דבר בלעדיך.",
+    emptyText: "האגדה עוד לא נכתבה. מי יכתוב אותה?",
   },
 ];
 
@@ -128,7 +136,7 @@ export function buildStations(players: readonly Player[], levels: readonly Level
 
 /** Motivating one-liner about the next goal. */
 export function nextGoalText(progress: Progress, count: number): string {
-  if (!progress.next) return "הגעת לפסגה! עכשיו רק לשמור על הכתר 👑";
+  if (!progress.next) return "הגעת לפסגה! מעכשיו זה רשמי – אגדה 🌟";
   const missing = progress.remaining === 1 ? "עוד דיווח אחד" : `עוד ${progress.remaining} דיווחים`;
   if (count === 0) return `הדיווח הראשון הוא הכי קשה, אחר כך זה ממכר. ${missing} ל${progress.next.title} ${progress.next.emoji}`;
   return `${missing} ל${progress.next.title} ${progress.next.emoji}`;

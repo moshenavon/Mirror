@@ -12,11 +12,22 @@ import { submitPublicEntry } from "@/app/actions/public-entries";
 import { GoogleSignInButton } from "@/app/login/google-sign-in-button";
 import { IncognitoIcon } from "@/components/incognito-icon";
 import { JoinTeamCard } from "@/components/join-team-card";
+import { getSharedLink } from "@/lib/shared-link";
+import { shareCopy, shareTitle } from "@/lib/share-preview";
 
-export const metadata: Metadata = {
-  title: "שיתוף תובנה",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({ params }: PageProps<"/r/[token]">): Promise<Metadata> {
+  const { token } = await params;
+  const link = await getSharedLink(token);
+  const title = shareTitle(link);
+  const { description } = shareCopy(link);
+  return {
+    title: link ? title : "שיתוף תובנה",
+    description,
+    robots: { index: false, follow: false },
+    openGraph: { title, description, type: "website", siteName: "Mirror", locale: "he_IL" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 type PublicForm = {
   team_name: string;
