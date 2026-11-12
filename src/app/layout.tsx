@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Heebo } from "next/font/google";
+import { Assistant, Rubik } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
 import { UserMenu } from "@/components/user-menu";
@@ -11,9 +11,16 @@ import { ThemeColorGuard } from "@/components/theme-color-guard";
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import "./globals.css";
 
-const heebo = Heebo({
-  variable: "--font-heebo",
+const rubik = Rubik({
+  variable: "--font-rubik",
   subsets: ["hebrew", "latin"],
+});
+
+// Used only for the "Mirror" wordmark.
+const assistant = Assistant({
+  variable: "--font-assistant",
+  subsets: ["latin"],
+  weight: ["800"],
 });
 
 export const metadata: Metadata = {
@@ -41,7 +48,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="he" dir="rtl" className={`${heebo.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="he" dir="rtl" className={`${rubik.variable} ${assistant.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
@@ -50,7 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeColorGuard />
         <header className="sticky top-0 z-20 border-b border-border bg-surface/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-            <Link href="/" className="group flex items-center gap-2.5 text-lg font-extrabold tracking-tight">
+            <Link href="/" className="group flex items-center gap-2.5 text-lg font-extrabold tracking-tight font-logo">
               <Logo size={32} className="transition duration-300 group-hover:-rotate-6 group-hover:scale-110" />
               Mirror
             </Link>
