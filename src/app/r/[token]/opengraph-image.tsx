@@ -81,8 +81,8 @@ export default async function Image({ params }: { params: Promise<{ token: strin
   const sprinkles = link?.allow_join ? JOIN_EMOJI : REPORT_EMOJI;
 
   const [regular, bold, logo, ...emoji] = await Promise.all([
-    asset("Heebo-500.ttf"),
-    asset("Heebo-800.ttf"),
+    asset("Rubik-500.ttf"),
+    asset("Rubik-800.ttf"),
     dataUrl("logo.png"),
     ...sprinkles.map(([code]) => dataUrl(`emoji-${code}.png`)),
   ]);
@@ -97,7 +97,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           alignItems: "center",
           justifyContent: "space-between",
           padding: "0 110px 0 130px",
-          fontFamily: "Heebo",
+          fontFamily: "Rubik",
           backgroundColor: NAVY,
           backgroundImage: "radial-gradient(circle at 30% 45%, #1d1880 0%, #0a0830 55%, #050020 100%)",
         }}
@@ -149,8 +149,8 @@ export default async function Image({ params }: { params: Promise<{ token: strin
     {
       ...size,
       fonts: [
-        { name: "Heebo", data: regular, weight: 500, style: "normal" },
-        { name: "Heebo", data: bold, weight: 800, style: "normal" },
+        { name: "Rubik", data: regular, weight: 500, style: "normal" },
+        { name: "Rubik", data: bold, weight: 800, style: "normal" },
       ],
     },
   );

@@ -19,7 +19,7 @@ export default function LoginPage() {
         <div className="mx-auto mb-5 w-fit animate-float">
           <Logo size={88} className="shadow-lg" />
         </div>
-        <h1 className="text-4xl font-extrabold tracking-tight">Mirror</h1>
+        <h1 className="font-logo text-4xl font-extrabold tracking-tight">Mirror</h1>
         <p className="mt-3 text-lg text-muted">
           מתעדים מחשבות ותובנות לאורך הדרך,
           <br />
