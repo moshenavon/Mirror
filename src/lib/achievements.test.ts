@@ -21,22 +21,24 @@ const player = (name: string, count: number, isMe = false): Player => ({
 
 describe("levels", () => {
   it("uses the 0 / 10 / 20 / 50 / 100 ladder from the start upwards", () => {
-    expect(LEVELS.map((l) => l.threshold)).toEqual([0, 10, 20, 50, 100]);
-    expect(LEVELS.map((l) => l.index)).toEqual([0, 1, 2, 3, 4]);
-    expect(LEVELS.at(-1)?.title).toBe("מלך הדיווחים");
+    expect(LEVELS.map((l) => l.threshold)).toEqual([0, 10, 25, 50, 100, 200]);
+    expect(LEVELS.map((l) => l.index)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(LEVELS.at(-1)?.title).toBe("אגדת הרטרו");
   });
 
   it.each([
     [0, 0],
     [9, 0],
     [10, 1],
-    [19, 1],
-    [20, 2],
+    [24, 1],
+    [25, 2],
     [49, 2],
     [50, 3],
     [99, 3],
     [100, 4],
-    [5000, 4],
+    [199, 4],
+    [200, 5],
+    [5000, 5],
   ])("%i entries → level %i", (count, index) => {
     expect(levelFor(count).index).toBe(index);
   });
@@ -45,14 +47,15 @@ describe("levels", () => {
 describe("progressFor", () => {
   it("measures progress inside the current band", () => {
     expect(progressFor(0)).toMatchObject({ remaining: 10, ratio: 0 });
-    expect(progressFor(15)).toMatchObject({ remaining: 5, ratio: 0.5 });
+    expect(progressFor(15)).toMatchObject({ remaining: 10, ratio: 1 / 3 });
     expect(progressFor(35).level.index).toBe(2);
-    expect(progressFor(35)).toMatchObject({ remaining: 15, ratio: 0.5 });
+    expect(progressFor(35)).toMatchObject({ remaining: 15, ratio: 0.4 });
+    expect(progressFor(150)).toMatchObject({ remaining: 50, ratio: 0.5 });
     expect(progressFor(15).next?.index).toBe(2);
   });
 
   it("is full at the top", () => {
-    expect(progressFor(150)).toMatchObject({ next: null, remaining: 0, ratio: 1 });
+    expect(progressFor(250)).toMatchObject({ next: null, remaining: 0, ratio: 1 });
   });
 
   it("ignores negative / fractional counts", () => {
@@ -67,10 +70,10 @@ describe("nextGoalText", () => {
     expect(nextGoalText(progressFor(0), 0)).toContain("עוד 10 דיווחים לגוזל המשוב");
   });
   it("uses the singular for one missing entry", () => {
-    expect(nextGoalText(progressFor(19), 19)).toBe("עוד דיווח אחד לבלש התובנות 🕵️");
+    expect(nextGoalText(progressFor(24), 24)).toBe("עוד דיווח אחד לבלש התובנות 🕵️");
   });
   it("celebrates the top", () => {
-    expect(nextGoalText(progressFor(100), 100)).toContain("הגעת לפסגה");
+    expect(nextGoalText(progressFor(200), 200)).toContain("הגעת לפסגה");
   });
 });
 

@@ -17,8 +17,8 @@ describe("AchievementsMap", () => {
     const mine = screen.getByRole("region", { name: "ההתקדמות שלי" });
     expect(within(mine).getByText("גוזל המשוב")).toBeInTheDocument();
     expect(within(mine).getByText("15 דיווחים עד עכשיו")).toBeInTheDocument();
-    expect(within(mine).getByText("עוד 5 דיווחים לבלש התובנות 🕵️")).toBeInTheDocument();
-    expect(within(mine).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "50");
+    expect(within(mine).getByText("עוד 10 דיווחים לבלש התובנות 🕵️")).toBeInTheDocument();
+    expect(within(mine).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "33");
     expect(within(mine).getByRole("link", { name: /לדווח עכשיו/ })).toHaveAttribute("href", "/teams/t1");
     expect(within(mine).getByText(/135 דיווחים/)).toBeInTheDocument();
   });
@@ -32,9 +32,10 @@ describe("AchievementsMap", () => {
     expect(stations.map((s) => s.getAttribute("aria-label"))).toEqual([
       "ביצת הזינוק – נקודת ההתחלה",
       "גוזל המשוב – 10 דיווחים",
-      "בלש התובנות – 20 דיווחים",
+      "בלש התובנות – 25 דיווחים",
       "טייס הרטרו – 50 דיווחים",
       "מלך הדיווחים – 100 דיווחים",
+      "אגדת הרטרו – 200 דיווחים",
     ]);
     expect(within(stations[0]).getByText("yossi · 0 דיווחים")).toBeInTheDocument();
     expect(within(stations[1]).getByText("משה כהן · 15 דיווחים")).toBeInTheDocument();
