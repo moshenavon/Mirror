@@ -1,7 +1,7 @@
 /** Same colours as `viewport.themeColor` in the root layout. */
 const THEME_COLORS = [
-  ["light", "#ffd02f"],
-  ["dark", "#0a0830"],
+  ["light", "#7cc8ff"],
+  ["dark", "#07122e"],
 ] as const;
 
 // On every client navigation to a page with its own metadata, Next/React
