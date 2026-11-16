@@ -8,7 +8,7 @@ type Props = {
   className?: string;
 };
 
-const COLORS = ["#050038", "#3d2fb3", "#d9467a", "#12805c", "#e0671e", "#2a83c6", "#8e44ad"];
+const COLORS = ["#0a1a44", "#3d2fb3", "#d9467a", "#12805c", "#e0671e", "#2a83c6", "#8e44ad"];
 
 function colorFor(name: string): string {
   let hash = 0;

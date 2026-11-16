@@ -11,8 +11,8 @@ export const contentType = "image/png";
 
 const ASSETS = join(process.cwd(), "src/assets/og");
 
-const YELLOW = "#ffd02f";
-const NAVY = "#050038";
+const ACCENT = "#7cc8ff";
+const NAVY = "#0a1a44";
 
 async function asset(name: string): Promise<Buffer> {
   return readFile(join(ASSETS, name));
@@ -99,7 +99,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           padding: "0 110px 0 130px",
           fontFamily: "Rubik",
           backgroundColor: NAVY,
-          backgroundImage: "radial-gradient(circle at 30% 45%, #1d1880 0%, #0a0830 55%, #050020 100%)",
+          backgroundImage: "radial-gradient(circle at 30% 45%, #0c3399 0%, #0a1a44 55%, #061029 100%)",
         }}
       >
         {sprinkles.map(([code, x, y, s, r], i) => (
@@ -121,7 +121,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           style={{
             borderRadius: 66,
             transform: "rotate(-4deg)",
-            boxShadow: "0 30px 80px rgba(255, 208, 47, 0.28)",
+            boxShadow: "0 30px 80px rgba(124, 200, 255, 0.28)",
           }}
         />
 
@@ -129,7 +129,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           <div
             style={{
               display: "flex",
-              backgroundColor: YELLOW,
+              backgroundColor: ACCENT,
               color: NAVY,
               borderRadius: 999,
               padding: "8px 26px 12px",
@@ -138,7 +138,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
             <Rtl text={copy.kicker} fontSize={30} color={NAVY} weight={800} gap={9} />
           </div>
           <div style={{ display: "flex", marginTop: 22 }}>
-            <Rtl text={copy.title} fontSize={titleSize(copy.title)} color={YELLOW} weight={800} gap={22} />
+            <Rtl text={copy.title} fontSize={titleSize(copy.title)} color={ACCENT} weight={800} gap={22} />
           </div>
           <div style={{ display: "flex", marginTop: 22 }}>
             <Rtl text={copy.description} fontSize={36} color="#ffffff" weight={500} gap={11} />

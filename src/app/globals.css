@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
-/* Brand: yellow #FFD02F + night navy #050038 (from the logo) */
+/* Brand: sky blue #7CC8FF + midnight navy #0A1A44 (from the logo) */
 :root {
-  --background: #fffbef;
+  --background: #f2faff;
   --surface: #ffffff;
-  --foreground: #050038;
-  --muted: #5d5a85;
-  --border: #ece5cf;
-  --primary: #050038;
-  --primary-strong: #1a1466;
+  --foreground: #0A1A44;
+  --muted: #717a93;
+  --border: #d5edff;
+  --primary: #0A1A44;
+  --primary-strong: #27355a;
   --on-primary: #ffffff;
-  --primary-soft: #fff3c4;
-  --accent: #ffd02f;
-  --on-accent: #050038;
+  --primary-soft: #daf0ff;
+  --accent: #7CC8FF;
+  --on-accent: #0A1A44;
   --danger: #d0263d;
   --danger-soft: #fde8eb;
   --success: #12805c;
@@ -23,17 +23,17 @@
 /* Dark: follows the system unless the user picked a theme (data-theme on <html>). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #030219;
-    --surface: #0a0830;
-    --foreground: #fff8e6;
-    --muted: #9d99c8;
-    --border: #1b1758;
-    --primary: #f0bf1c;
-    --primary-strong: #ffd02f;
-    --on-primary: #050038;
-    --primary-soft: #17124a;
-    --accent: #ffd02f;
-    --on-accent: #050038;
+    --background: #040a1b;
+    --surface: #07122e;
+    --foreground: #edf7ff;
+    --muted: #8b939f;
+    --border: #313f62;
+    --primary: #7CC8FF;
+    --primary-strong: #90d0ff;
+    --on-primary: #07112c;
+    --primary-soft: #09183f;
+    --accent: #7CC8FF;
+    --on-accent: #07112c;
     --danger: #ff6b7d;
     --danger-soft: #2a0e22;
     --success: #4fd6a2;
@@ -43,17 +43,17 @@
 }
 
 :root[data-theme="dark"] {
-  --background: #030219;
-  --surface: #0a0830;
-  --foreground: #fff8e6;
-  --muted: #9d99c8;
-  --border: #1b1758;
-  --primary: #f0bf1c;
-  --primary-strong: #ffd02f;
-  --on-primary: #050038;
-  --primary-soft: #17124a;
-  --accent: #ffd02f;
-  --on-accent: #050038;
+  --background: #040a1b;
+  --surface: #07122e;
+  --foreground: #edf7ff;
+  --muted: #8b939f;
+  --border: #313f62;
+  --primary: #7CC8FF;
+  --primary-strong: #90d0ff;
+  --on-primary: #07112c;
+  --primary-soft: #09183f;
+  --accent: #7CC8FF;
+  --on-accent: #07112c;
   --danger: #ff6b7d;
   --danger-soft: #2a0e22;
   --success: #4fd6a2;

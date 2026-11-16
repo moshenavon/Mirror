@@ -1,4 +1,4 @@
-const BRAND_COLORS = ["#FFD02F", "#050038", "#FF6B7D", "#4FD6A2", "#8B7FF0", "#ffffff"];
+const BRAND_COLORS = ["#7CC8FF", "#0A1A44", "#FF6B7D", "#4FD6A2", "#8B7FF0", "#ffffff"];
 
 function reducedMotion() {
   return typeof window === "undefined" || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
