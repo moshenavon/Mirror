@@ -8,7 +8,7 @@ export function Logo({ size = 32, className = "" }: { size?: number; className?:
       width={size}
       height={size}
       priority
-      className={`rounded-[22%] shadow-sm ${className}`}
+      className={`rounded-[22%] shadow-sm ring-1 ring-primary/50 ${className}`}
     />
   );
 }
