@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { getActionItems, getTeamContext } from "@/lib/data";
+import { getActionItems, getMentionables, getTeamContext } from "@/lib/data";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { ActionItemsList } from "@/components/action-items/action-items-list";
 
@@ -17,7 +17,7 @@ export default function ActionItemsPage({ params }: PageProps<"/teams/[teamId]/a
 async function ActionItems({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const { team, permissions, user } = await getTeamContext(teamId);
-  const items = await getActionItems(team.id);
+  const [items, mentionables] = await Promise.all([getActionItems(team.id), getMentionables(team.id)]);
 
   return (
     <section aria-labelledby="action-items-title">
@@ -32,6 +32,8 @@ async function ActionItems({ params }: { params: Promise<{ teamId: string }> }) 
         items={items}
         canViewInsights={permissions.canViewInsights}
         currentUserName={user.name || user.email}
+        currentUserEmail={user.email}
+        members={mentionables}
       />
     </section>
   );

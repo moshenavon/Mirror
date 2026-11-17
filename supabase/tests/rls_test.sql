@@ -220,6 +220,56 @@ begin
   end;
 end $$;
 
+-- ---------- action items: assignees (tags) – alice ----------
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+  v_entry uuid := (select id from public.entries where team_id = v_team and author_id is not null limit 1);
+  v_a uuid;
+  v_b uuid;
+  v_c uuid;
+begin
+  -- members are kept (case-insensitive, de-duplicated); outsiders and strangers are dropped
+  v_a := public.create_action_item(v_team, v_entry, 'tagged',
+           array['BOB@example.com', ' bob@example.com ', 'alice@example.com', 'carol@example.com', 'nobody@example.com']);
+  assert (select assignees from public.get_action_items(v_team) where id = v_a) = array['alice@example.com', 'bob@example.com'],
+    'only team members are kept as assignees';
+
+  v_b := public.create_action_item(v_team, v_entry, 'untagged');
+  assert (select assignees from public.get_action_items(v_team) where id = v_b) = '{}', 'no assignees by default';
+
+  v_c := public.create_action_item(v_team, v_entry, 'null tags', null);
+  assert (select assignees from public.get_action_items(v_team) where id = v_c) = '{}', 'null assignees means none';
+
+  assert (select count(*) from public.get_action_items(v_team) where 'bob@example.com' = any (assignees)) = 1, 'filter by assignee';
+  assert (select count(*) from public.get_action_items(v_team) where cardinality(assignees) = 0) = 4, 'unassigned items';
+
+  perform public.delete_action_item(v_a);
+  perform public.delete_action_item(v_b);
+  perform public.delete_action_item(v_c);
+end $$;
+
+-- a member cannot create items, so cannot tag either
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_team uuid := (select v::uuid from t_ctx where k = 'team');
+begin
+  begin
+    perform public.create_action_item(v_team, gen_random_uuid(), 'nope', array['bob@example.com']);
+    raise exception 'member created a tagged action item';
+  exception when insufficient_privilege then null;
+  end;
+  -- members see the assignees of the team's items
+  assert (select count(*) from public.get_action_items(v_team) where assignees is not null) = 2, 'members read assignees';
+end $$;
+
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
+set local role authenticated;
+
 -- ---------- action items: bob (member, no insights) ----------
 reset role;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);

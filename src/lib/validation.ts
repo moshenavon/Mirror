@@ -60,6 +60,12 @@ export const actionItemTitleSchema = trimmed(
   `המשימה יכולה להכיל עד ${LIMITS.actionItemTitle} תווים`,
 );
 
+/** E-mail addresses of tagged members: lower-cased, de-duplicated, at most 20. */
+export const assigneesSchema = z
+  .array(z.string().trim().toLowerCase().pipe(z.email({ error: "תיוג לא תקין" })), { error: "תיוג לא תקין" })
+  .max(20, { error: "אפשר לתייג עד 20 אנשים" })
+  .transform((emails) => [...new Set(emails)]);
+
 export type TeamInput = z.infer<typeof teamSchema>;
 export type FieldInput = z.infer<typeof fieldSchema>;
 

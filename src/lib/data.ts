@@ -11,6 +11,7 @@ import type { RpcReturn, Tables } from "@/lib/supabase/database.types";
 import { teamPermissions, type TeamPermissions } from "@/lib/permissions";
 import { sortByPosition } from "@/lib/fields";
 import type { ActionItem } from "@/lib/action-items";
+import { buildMentionables, type Mentionable } from "@/lib/mentions";
 
 export type CurrentUser = SessionUser;
 
@@ -112,8 +113,9 @@ export type Member = Tables<"team_members"> & {
   profile: Pick<Tables<"profiles">, "full_name" | "avatar_url"> | null;
 };
 
-export async function getMembers(teamId: string): Promise<Member[]> {
-  const supabase = await createClient();
+type Db = Awaited<ReturnType<typeof createClient>>;
+
+async function loadMembers(supabase: Db, teamId: string): Promise<Member[]> {
   const { data: members, error } = await supabase
     .from("team_members")
     .select("*")
@@ -129,6 +131,30 @@ export async function getMembers(teamId: string): Promise<Member[]> {
   }
   return (members ?? []).map((m) => ({ ...m, profile: profiles.get(m.email) ?? null }));
 }
+
+export async function getMembers(teamId: string): Promise<Member[]> {
+  return loadMembers(await createClient(), teamId);
+}
+
+async function fetchMentionables(user: CacheUser, teamId: string): Promise<Mentionable[]> {
+  "use cache: remote";
+  cacheLife(TEAM_DATA_LIFE);
+  cacheTag(cacheTags.members(teamId), cacheTags.teamsOf(user.email));
+  const members = await loadMembers(await createClientForUser(user), teamId);
+  return buildMentionables(
+    members.map((m) => ({ email: m.email, name: m.profile?.full_name ?? null, avatarUrl: m.profile?.avatar_url ?? null })),
+  );
+}
+
+/**
+ * The team's members as they can be tagged with "@" (report and action item fields).
+ * Cached on the server like the fields: team members read this through RLS, and the
+ * member actions expire the tag when someone is added or removed.
+ */
+export const getMentionables = cache(async (teamId: string): Promise<Mentionable[]> => {
+  const user = await getCurrentUser();
+  return fetchMentionables({ id: user.id, email: user.email }, teamId);
+});
 
 export type InsightRow = RpcReturn<"get_insights">[number];
 
@@ -175,5 +201,6 @@ export async function getActionItems(teamId: string): Promise<ActionItem[]> {
     doneAt: r.done_at,
     doneByName: r.done_by_name,
     canDelete: r.can_delete,
+    assignees: r.assignees ?? [],
   }));
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionItemsLabel, applyDone, groupByEntry, isDone, sortActionItems, type ActionItem } from "./action-items";
+import { actionItemsLabel, applyDone, filterActionItems, groupByEntry, isDone, sortActionItems, type ActionItem } from "./action-items";
 
 const item = (id: string, createdAt: string, doneAt: string | null = null, entryId: string | null = null): ActionItem => ({
   id,
@@ -13,6 +13,7 @@ const item = (id: string, createdAt: string, doneAt: string | null = null, entry
   doneAt,
   doneByName: null,
   canDelete: false,
+  assignees: [],
 });
 
 describe("sortActionItems", () => {
@@ -61,5 +62,33 @@ describe("actionItemsLabel", () => {
   it("pluralises", () => {
     expect(actionItemsLabel(1)).toBe("משימה אחת");
     expect(actionItemsLabel(3)).toBe("3 משימות");
+  });
+});
+
+describe("filterActionItems", () => {
+  const items = [
+    { id: "1", assignees: ["dana@x.co"] },
+    { id: "2", assignees: ["dana@x.co", "me@x.co"] },
+    { id: "3", assignees: [] },
+    { id: "4", assignees: ["Yossi@X.co"] },
+  ];
+  const ids = (list: { id: string }[]) => list.map((i) => i.id);
+
+  it("shows everything for 'all'", () => {
+    expect(ids(filterActionItems(items, { kind: "all" }, "me@x.co"))).toEqual(["1", "2", "3", "4"]);
+  });
+
+  it("shows the items assigned to the signed-in user for 'mine'", () => {
+    expect(ids(filterActionItems(items, { kind: "mine" }, "ME@x.co"))).toEqual(["2"]);
+  });
+
+  it("shows only items without assignees for 'unassigned'", () => {
+    expect(ids(filterActionItems(items, { kind: "unassigned" }, "me@x.co"))).toEqual(["3"]);
+  });
+
+  it("shows the items of one member, ignoring e-mail case", () => {
+    expect(ids(filterActionItems(items, { kind: "member", email: "dana@x.co" }, "me@x.co"))).toEqual(["1", "2"]);
+    expect(ids(filterActionItems(items, { kind: "member", email: "yossi@x.co" }, "me@x.co"))).toEqual(["4"]);
+    expect(filterActionItems(items, { kind: "member", email: "nobody@x.co" }, "me@x.co")).toEqual([]);
   });
 });

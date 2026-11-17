@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import confetti from "canvas-confetti";
+import { buildMentionables } from "@/lib/mentions";
 import { ReportBoard, type ReportField } from "./report-board";
 
 const fields: ReportField[] = [
@@ -118,5 +119,46 @@ describe("ReportBoard", () => {
     await user.click(screen.getByRole("button", { name: "ביטול" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
+  });
+
+  describe("tagging with @", () => {
+    const team = buildMentionables([
+      { email: "dana@x.co", name: "דנה" },
+      { email: "yossi@x.co", name: "יוסי" },
+    ]);
+
+    it("opens a member list on @ and writes the tag into the report", async () => {
+      window.localStorage.clear();
+      const user = userEvent.setup();
+      const submit = okSubmit();
+      render(<ReportBoard fields={fields} onSubmit={submit} mentionables={team} />);
+      await user.click(screen.getByRole("button", { name: /ממה אני שמח/ }));
+      await user.type(screen.getByRole("textbox"), "תודה @ד");
+      await user.click(screen.getByRole("option", { name: /דנה/ }));
+      await user.type(screen.getByRole("textbox"), "על העזרה");
+      await user.click(screen.getByRole("button", { name: /שליחה/ }));
+      await waitFor(() => expect(submit).toHaveBeenCalledWith("f1", "תודה @דנה על העזרה", false));
+    });
+
+    it("shows the tagging tip once in the report dialog, and not again", async () => {
+      window.localStorage.clear();
+      const user = userEvent.setup();
+      render(<ReportBoard fields={fields} onSubmit={okSubmit()} mentionables={team} />);
+      await user.click(screen.getByRole("button", { name: /ממה אני שמח/ }));
+      expect(screen.getByRole("note")).toHaveTextContent("@");
+      await user.click(screen.getByRole("button", { name: "ביטול" }));
+      await user.click(screen.getByRole("button", { name: /ממה הייתי עצוב/ }));
+      expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    });
+
+    it("offers no tagging without members (public link)", async () => {
+      window.localStorage.clear();
+      const user = userEvent.setup();
+      render(<ReportBoard fields={fields} onSubmit={okSubmit()} />);
+      await user.click(screen.getByRole("button", { name: /ממה אני שמח/ }));
+      await user.type(screen.getByRole("textbox"), "@");
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    });
   });
 });

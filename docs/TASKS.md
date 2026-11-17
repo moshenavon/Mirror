@@ -66,6 +66,16 @@
 | 31 | בדיקות (unit, קומפוננטות, RLS) – כולן עוברות, כולל `rls_test.sql` מול Postgres מקומי | ✅ |
 | 32 | החלת המיגרציה ב-Supabase | 🧑 |
 
+## שלב 5 – תיוג וסינון משימות
+
+| # | משימה | סטטוס |
+|---|-------|:----:|
+| 33 | תיוג חברי צוות עם `@` בשדה הדיווח ובשדה יצירת Action Item: רשימה נפתחת, סינון בהקלדה, מקלדת ומגע | ✅ |
+| 34 | חיווי חד פעמי "אפשר לתייג עם @" – פעם בשדה הדיווח ופעם בשדה יצירת ה-Action Item | ✅ |
+| 35 | משימות: שיוך למתויגים (`assignees`) – migration `20261117000000_action_item_assignees.sql`, RPC, טיפוסים, בדיקות RLS (נבדק מול Postgres 16 מקומי, כולל שדרוג ממסד קיים) | ✅ |
+| 36 | מסך המשימות: כפתור סינון (חבר צוות / משויכות אליי / לא משויכות), התקדמות והודעת "כל המשימות בוצעו" לפי הסינון | ✅ |
+| 37 | 🧑 להחיל את המיגרציה `20261117000000_action_item_assignees.sql` ב-Supabase | 🧑 |
+
 ## פעולות שנדרשות מהמשתמש (בסוף)
 
 1. **מסד הנתונים** – Supabase → SQL Editor → הכי פשוט: להריץ את `supabase/mirror_all_migrations.sql` (כל המיגרציות בקובץ אחד, בטוח גם אם חלקן כבר הוחלו).
@@ -74,7 +84,8 @@
    `supabase/migrations/20261111180000_achievements.sql` (מסך ההישגים),
    `supabase/migrations/20261111190000_action_items.sql` (Action items),
    `supabase/migrations/20261111200000_public_link_identity.sql` (קישור ציבורי עם חובת הזדהות),
-   `supabase/migrations/20261111210000_public_link_join.sql` (הצטרפות לצוות דרך הקישור).
+   `supabase/migrations/20261111210000_public_link_join.sql` (הצטרפות לצוות דרך הקישור),
+   `supabase/migrations/20261117000000_action_item_assignees.sql` (תיוג ושיוך משימות).
    אחר כך להריץ את `supabase/tests/rls_test.sql` → צפוי `ALL RLS TESTS PASSED`.
 2. **Google Cloud Console** → APIs & Services → Credentials → Create OAuth client ID → Web application:
    - Authorized JavaScript origins: `https://mirror-six-gray.vercel.app`, `http://localhost:3000`

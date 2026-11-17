@@ -243,7 +243,7 @@ export type Database = {
         Returns: undefined;
       };
       create_action_item: {
-        Args: { p_team_id: string; p_entry_id: string; p_title: string };
+        Args: { p_team_id: string; p_entry_id: string; p_title: string; p_assignees?: string[] };
         Returns: string;
       };
       set_action_item_done: {
@@ -269,6 +269,7 @@ export type Database = {
           done_at: string | null;
           done_by_name: string | null;
           can_delete: boolean;
+          assignees: string[];
         }[];
       };
     };

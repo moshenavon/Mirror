@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { deleteActionItem, setActionItemDone } from "@/app/actions/action-items";
-import { applyDone, isDone, type ActionItem } from "@/lib/action-items";
+import { ALL_ITEMS, applyDone, filterActionItems, isDone, type ActionItem, type ActionItemFilter } from "@/lib/action-items";
+import { labelForEmail, type Mentionable } from "@/lib/mentions";
+import { ActionItemsFilterMenu, filterLabel } from "./action-items-filter";
 import { formatDate } from "@/lib/dates";
 import { celebrate } from "@/lib/confetti";
 import { Emoji } from "@/components/emoji";
@@ -21,13 +23,25 @@ type Props = {
   canViewInsights: boolean;
   /** Shown as "done by" until the server confirms. */
   currentUserName: string | null;
+  /** The signed-in user's e-mail, for "assigned to me". */
+  currentUserEmail: string;
+  /** Team members, for the filter and for the names of the assignees. */
+  members?: Mentionable[];
   /** Injected for tests. */
   actions?: Actions;
 };
 
 const defaultActions: Actions = { setDone: setActionItemDone, remove: deleteActionItem };
 
-export function ActionItemsList({ teamId, items, canViewInsights, currentUserName, actions = defaultActions }: Props) {
+export function ActionItemsList({
+  teamId,
+  items,
+  canViewInsights,
+  currentUserName,
+  currentUserEmail,
+  members = [],
+  actions = defaultActions,
+}: Props) {
   // Local copy for instant (optimistic) re-ordering; reset whenever the server sends a new list.
   const [list, setList] = useState(items);
   const [source, setSource] = useState(items);
@@ -38,7 +52,11 @@ export function ActionItemsList({ teamId, items, canViewInsights, currentUserNam
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const doneCount = list.filter(isDone).length;
+  const [filter, setFilter] = useState<ActionItemFilter>(ALL_ITEMS);
+
+  // Progress and the "all done" message follow the current filter.
+  const visible = filterActionItems(list, filter, currentUserEmail);
+  const doneCount = visible.filter(isDone).length;
 
   function toggle(item: ActionItem, done: boolean, origin?: { x: number; y: number }) {
     setError(null);
@@ -84,23 +102,46 @@ export function ActionItemsList({ teamId, items, canViewInsights, currentUserNam
     );
   }
 
-  const progress = doneCount / list.length;
+  const filterBar = (
+    <div className="flex justify-end">
+      <ActionItemsFilterMenu value={filter} onChange={setFilter} members={members} currentEmail={currentUserEmail} />
+    </div>
+  );
+
+  if (visible.length === 0) {
+    return (
+      <div className="space-y-4">
+        {filterBar}
+        <div className="animate-fade-up rounded-2xl border border-dashed border-border p-8 text-center text-muted">
+          <Emoji value="🔍" size={64} className="mx-auto mb-2" />
+          <p>{emptyFilterMessage(filter, members)}</p>
+          <button type="button" onClick={() => setFilter(ALL_ITEMS)} className={buttonClass("secondary", "sm", "mt-3")}>
+            הצגת כל המשימות
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const progress = doneCount / visible.length;
 
   return (
     <div className="space-y-4">
+      {filterBar}
+
       <div className="animate-fade-up rounded-2xl border border-border bg-surface p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between gap-3 text-sm">
           <span className="font-semibold">
-            {doneCount} מתוך {list.length} בוצעו
+            {doneCount} מתוך {visible.length} בוצעו
           </span>
-          {doneCount === list.length && <span className="font-semibold text-success">כל המשימות בוצעו 🎉</span>}
+          {doneCount === visible.length && <span className="font-semibold text-success">כל המשימות בוצעו 🎉</span>}
         </div>
         <div
           className="h-2.5 overflow-hidden rounded-full bg-border"
           role="progressbar"
           aria-label="התקדמות המשימות"
           aria-valuemin={0}
-          aria-valuemax={list.length}
+          aria-valuemax={visible.length}
           aria-valuenow={doneCount}
         >
           <motion.div
@@ -120,7 +161,7 @@ export function ActionItemsList({ teamId, items, canViewInsights, currentUserNam
 
       <ul className="space-y-3" aria-label="משימות">
         <AnimatePresence initial={false}>
-          {list.map((item) => (
+          {visible.map((item) => (
             <motion.li
               key={item.id}
               layout
@@ -129,7 +170,7 @@ export function ActionItemsList({ teamId, items, canViewInsights, currentUserNam
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 380, damping: 32 }}
             >
-              <ActionItemRow item={item} onToggle={toggle} onRemove={remove} />
+              <ActionItemRow item={item} members={members} onToggle={toggle} onRemove={remove} />
             </motion.li>
           ))}
         </AnimatePresence>
@@ -138,12 +179,27 @@ export function ActionItemsList({ teamId, items, canViewInsights, currentUserNam
   );
 }
 
+function emptyFilterMessage(filter: ActionItemFilter, members: Mentionable[]): string {
+  switch (filter.kind) {
+    case "mine":
+      return "אין משימות שמשויכות אליך.";
+    case "unassigned":
+      return "אין משימות לא משויכות.";
+    case "member":
+      return `אין משימות שמשויכות ל${filterLabel(filter, members)}.`;
+    default:
+      return "אין משימות.";
+  }
+}
+
 function ActionItemRow({
   item,
+  members,
   onToggle,
   onRemove,
 }: {
   item: ActionItem;
+  members: Mentionable[];
   onToggle: (item: ActionItem, done: boolean, origin?: { x: number; y: number }) => void;
   onRemove: (item: ActionItem) => Promise<boolean>;
 }) {
@@ -244,6 +300,19 @@ function ActionItemRow({
             <span>
               נוצרה {formatDate(item.createdAt)}
               {item.createdByName && ` · ${item.createdByName}`}
+            </span>
+            <span data-testid="assignees">
+              {item.assignees.length > 0 ? (
+                <>
+                  <span aria-hidden>👤 </span>
+                  <span className="sr-only">משויכת ל:</span>{" "}
+                  <span className="font-semibold text-foreground">
+                    {item.assignees.map((email) => labelForEmail(email, members)).join(", ")}
+                  </span>
+                </>
+              ) : (
+                "לא משויכת"
+              )}
             </span>
 
             {item.canDelete && (

@@ -40,6 +40,10 @@ for f in files:
                           "drop function if exists public.my_teams();\ncreate function public.my_teams()")
         sql = sql.replace("create or replace function public.get_insights(",
                           "drop function if exists public.get_insights(uuid, timestamptz, timestamptz);\ncreate function public.get_insights(")
+    if f.name.endswith("_action_items.sql"):
+        # a later migration adds a column to the result (assignees)
+        sql = sql.replace("create or replace function public.get_action_items(",
+                          "drop function if exists public.get_action_items(uuid);\ncreate function public.get_action_items(")
     # enum types
     sql = re.sub(r"create type (public\.\w+) as enum \(([^)]*)\);",
                  lambda m: f"do $$ begin\n  create type {m.group(1)} as enum ({m.group(2)});\nexception when duplicate_object then null;\nend $$;", sql)

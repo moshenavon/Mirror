@@ -11,6 +11,8 @@ export type ActionItem = {
   doneAt: string | null;
   doneByName: string | null;
   canDelete: boolean;
+  /** E-mail addresses of the team members the task is assigned to (tagged with "@"). */
+  assignees: string[];
 };
 
 export const isDone = (item: Pick<ActionItem, "doneAt">): boolean => item.doneAt !== null;
@@ -59,4 +61,32 @@ export function groupByEntry<T extends Pick<ActionItem, "entryId">>(items: reado
 
 export function actionItemsLabel(count: number): string {
   return count === 1 ? "משימה אחת" : `${count} משימות`;
+}
+
+/** Which tasks the Action items screen shows. */
+export type ActionItemFilter =
+  | { kind: "all" }
+  /** Assigned to the signed-in user. */
+  | { kind: "mine" }
+  | { kind: "unassigned" }
+  | { kind: "member"; email: string };
+
+export const ALL_ITEMS: ActionItemFilter = { kind: "all" };
+
+export function filterActionItems<T extends Pick<ActionItem, "assignees">>(
+  items: readonly T[],
+  filter: ActionItemFilter,
+  currentEmail: string,
+): T[] {
+  const has = (item: T, email: string) => item.assignees.some((a) => a.toLowerCase() === email.toLowerCase());
+  switch (filter.kind) {
+    case "all":
+      return [...items];
+    case "mine":
+      return items.filter((item) => has(item, currentEmail));
+    case "unassigned":
+      return items.filter((item) => item.assignees.length === 0);
+    case "member":
+      return items.filter((item) => has(item, filter.email));
+  }
 }

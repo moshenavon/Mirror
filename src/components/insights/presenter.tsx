@@ -27,6 +27,8 @@ import { buttonClass } from "@/components/ui";
 import { IncognitoIcon } from "@/components/incognito-icon";
 import { isDone, type ActionItem } from "@/lib/action-items";
 import { ActionItemDialog } from "@/components/action-items/action-item-dialog";
+import { MentionText } from "@/components/mention-textarea";
+import type { Mentionable } from "@/lib/mentions";
 
 type Result = { ok: true } | { ok: false; error: string };
 type LinkedItem = Pick<ActionItem, "id" | "title" | "doneAt">;
@@ -42,7 +44,9 @@ type Props = {
   /** Action items already created, by source entry id. */
   actionItemsByEntry?: Map<string, LinkedItem[]>;
   /** When given, every slide offers "create action item". */
-  onCreateActionItem?: (entryId: string, title: string) => Promise<Result>;
+  onCreateActionItem?: (entryId: string, title: string, assignees: string[]) => Promise<Result>;
+  /** Team members, so "@Name" tags in the reports are highlighted and can be used in new tasks. */
+  mentionables?: Mentionable[];
 };
 
 const ORDERS: { id: PresentationOrder; label: string; icon: string; hint: string }[] = [
@@ -70,6 +74,7 @@ export function Presenter({
   onClose,
   actionItemsByEntry,
   onCreateActionItem,
+  mentionables = [],
 }: Props) {
   const [order, setOrder] = useState<PresentationOrder>("fields");
   const sections = useMemo(() => buildSections(fields, entries, order), [fields, entries, order]);
@@ -316,6 +321,7 @@ export function Presenter({
                 <SlideView
                   slide={slides[state.index]}
                   linkedItems={actionItemsByEntry?.get(slides[state.index].entry.entry_id) ?? []}
+                  mentionables={mentionables}
                   onCreateActionItem={onCreateActionItem ? () => setCreatingFor(slides[state.index]) : undefined}
                 />
               )}
@@ -352,8 +358,9 @@ export function Presenter({
             setCreatingFor(null);
             containerRef.current?.focus();
           }}
-          onSubmit={async (itemTitle) => {
-            const result = await onCreateActionItem(creatingFor.entry.entry_id, itemTitle);
+          mentionables={mentionables}
+          onSubmit={async (itemTitle, assignees) => {
+            const result = await onCreateActionItem(creatingFor.entry.entry_id, itemTitle, assignees);
             if (result.ok) {
               setCreatingFor(null);
               setToast("המשימה נוספה לרשימת המשימות של הצוות");
@@ -497,10 +504,12 @@ function useFitText(boxRef: React.RefObject<HTMLElement | null>, textRef: React.
 function SlideView({
   slide,
   linkedItems,
+  mentionables,
   onCreateActionItem,
 }: {
   slide: Slide;
   linkedItems: LinkedItem[];
+  mentionables: Mentionable[];
   onCreateActionItem?: () => void;
 }) {
   const name = displayName(slide.entry);
@@ -551,7 +560,7 @@ function SlideView({
           <span aria-hidden className="absolute -top-6 right-6 text-6xl leading-none text-accent">
             ”
           </span>
-          {slide.entry.content}
+          <MentionText text={slide.entry.content} mentionables={mentionables} />
         </motion.blockquote>
       </div>
 
