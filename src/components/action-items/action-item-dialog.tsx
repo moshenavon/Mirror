@@ -6,6 +6,7 @@ import { LIMITS } from "@/lib/validation";
 import { Emoji } from "@/components/emoji";
 import { MentionTextarea, MentionText } from "@/components/mention-textarea";
 import { buttonClass } from "@/components/ui";
+import { useKeyboardDialogStyle } from "@/lib/keyboard";
 import { MENTION_HINT_KEYS, findMentions, type Mentionable } from "@/lib/mentions";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -29,6 +30,7 @@ type Props = {
 /** Dialog for turning an insight into a follow-up task for the team. */
 export function ActionItemDialog({ source, onClose, onSubmit, mentionables = [] }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
+  const keyboardStyle = useKeyboardDialogStyle();
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -62,8 +64,9 @@ export function ActionItemDialog({ source, onClose, onSubmit, mentionables = [] 
         e.preventDefault();
         if (!pending) onClose();
       }}
-      // Pinned to the top on phones: a centred dialog ends up behind the on-screen keyboard.
-      className="mx-auto mb-auto mt-3 w-[min(40rem,calc(100%-2rem))] overflow-visible bg-transparent p-0 text-foreground sm:my-auto"
+      // Centred in the space the on-screen keyboard leaves free (see useKeyboardDialogStyle).
+      style={keyboardStyle}
+      className="m-auto w-[min(40rem,calc(100%-2rem))] overflow-visible bg-transparent p-0 text-foreground transition-[top,bottom] duration-200 motion-reduce:transition-none"
     >
       <motion.form
         onSubmit={handleSubmit}
