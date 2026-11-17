@@ -62,25 +62,26 @@ export function ActionItemDialog({ source, onClose, onSubmit, mentionables = [] 
         e.preventDefault();
         if (!pending) onClose();
       }}
-      className="m-auto w-[min(40rem,calc(100%-2rem))] overflow-visible bg-transparent p-0 text-foreground"
+      // Pinned to the top on phones: a centred dialog ends up behind the on-screen keyboard.
+      className="mx-auto mb-auto mt-3 w-[min(40rem,calc(100%-2rem))] overflow-visible bg-transparent p-0 text-foreground sm:my-auto"
     >
       <motion.form
         onSubmit={handleSubmit}
         initial={{ opacity: 0, scale: 0.9, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 320, damping: 24 }}
-        className="relative rounded-[2rem] border border-border bg-surface p-6 text-start shadow-2xl sm:p-8"
+        className="relative rounded-3xl border border-border bg-surface p-4 text-start shadow-2xl sm:rounded-[2rem] sm:p-8"
       >
-        <h2 id="action-item-dialog-title" className="mb-4 flex items-center gap-2 text-2xl font-bold">
+        <h2 id="action-item-dialog-title" className="mb-3 flex items-center gap-2 text-xl font-bold sm:mb-4 sm:text-2xl">
           <span aria-hidden>🎯</span> יצירת Action Item
         </h2>
 
-        <figure className="mb-5 rounded-2xl bg-primary-soft p-4">
+        <figure className="mb-3 rounded-2xl bg-primary-soft p-3 sm:mb-5 sm:p-4">
           <figcaption className="mb-1 flex items-center gap-2 text-sm font-semibold">
             <Emoji value={source.fieldEmoji} size={24} />
             {source.fieldLabel} · {source.authorName}
           </figcaption>
-          <blockquote className="line-clamp-4 whitespace-pre-wrap text-muted">
+          <blockquote className="line-clamp-2 whitespace-pre-wrap text-muted sm:line-clamp-4">
             <MentionText text={source.content} mentionables={mentionables} />
           </blockquote>
         </figure>
@@ -98,9 +99,9 @@ export function ActionItemDialog({ source, onClose, onSubmit, mentionables = [] 
           rows={3}
           maxLength={LIMITS.actionItemTitle}
           autoFocus
-          className="text-lg leading-relaxed"
+          className="max-h-48 min-h-[5.5rem] text-lg leading-relaxed [field-sizing:content]"
         />
-        <div className="mt-2 flex items-center justify-end text-sm text-muted">
+        <div className="mt-1 flex items-center justify-end text-sm text-muted">
           {title.length}/{LIMITS.actionItemTitle}
         </div>
         <AssigneesPreview title={title} mentionables={mentionables} />
@@ -119,11 +120,11 @@ export function ActionItemDialog({ source, onClose, onSubmit, mentionables = [] 
           )}
         </AnimatePresence>
 
-        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="mt-4 flex gap-3 sm:justify-end">
           <button type="button" onClick={onClose} disabled={pending} className={buttonClass("secondary", "lg")}>
             ביטול
           </button>
-          <button type="submit" disabled={pending || trimmedLength === 0} className={buttonClass("primary", "lg", "min-w-32")}>
+          <button type="submit" disabled={pending || trimmedLength === 0} className={buttonClass("primary", "lg", "min-w-32 flex-1 sm:flex-none")}>
             {pending ? (
               <span className="inline-flex items-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
