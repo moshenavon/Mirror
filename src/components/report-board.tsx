@@ -5,8 +5,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { LIMITS } from "@/lib/validation";
 import { celebrate } from "@/lib/confetti";
 import { Emoji } from "./emoji";
-import { buttonClass, inputClass } from "./ui";
+import { buttonClass } from "./ui";
 import { IncognitoIcon } from "./incognito-icon";
+import { MentionTextarea } from "./mention-textarea";
+import { MENTION_HINT_KEYS, type Mentionable } from "@/lib/mentions";
 
 export type ReportField = {
   id: string;
@@ -26,6 +28,11 @@ type Props = {
    * "never": identified public link – every entry is stored under the sender's name.
    */
   anonymity?: Anonymity;
+  /**
+   * Team members that can be tagged with "@". Left out on the public link, where
+   * the visitor must not see who is in the team.
+   */
+  mentionables?: Mentionable[];
 };
 
 type Anonymity = "optional" | "always" | "never";
@@ -33,7 +40,7 @@ type Anonymity = "optional" | "always" | "never";
 /** From this many fields, phones show the buttons in two columns. */
 export const COMPACT_FROM = 4;
 
-export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props) {
+export function ReportBoard({ fields, onSubmit, anonymity = "optional", mentionables }: Props) {
   const [active, setActive] = useState<ReportField | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -100,6 +107,7 @@ export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props)
           key={active.id}
           field={active}
           anonymity={anonymity}
+          mentionables={mentionables}
           onClose={() => setActive(null)}
           onSubmit={async (content, anonymous) => {
             const result = await onSubmit(active.id, content, anonymous);
@@ -136,11 +144,12 @@ export function ReportBoard({ fields, onSubmit, anonymity = "optional" }: Props)
 type DialogProps = {
   field: ReportField;
   anonymity: Anonymity;
+  mentionables?: Mentionable[];
   onClose: () => void;
   onSubmit: (content: string, anonymous: boolean) => Promise<Result>;
 };
 
-export function EntryDialog({ field, anonymity, onClose, onSubmit }: DialogProps) {
+export function EntryDialog({ field, anonymity, mentionables, onClose, onSubmit }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const [content, setContent] = useState("");
   const [anonymous, setAnonymous] = useState(anonymity === "always");
@@ -196,15 +205,17 @@ export function EntryDialog({ field, anonymity, onClose, onSubmit }: DialogProps
         <label htmlFor="entry-content" className="sr-only">
           תוכן הדיווח
         </label>
-        <textarea
+        <MentionTextarea
           id="entry-content"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={setContent}
+          mentionables={mentionables}
+          hintKey={MENTION_HINT_KEYS.report}
           placeholder={field.placeholder || "כתבו כאן…"}
           rows={6}
           maxLength={LIMITS.entryContent}
           autoFocus
-          className={`${inputClass} text-lg leading-relaxed`}
+          className="text-lg leading-relaxed"
         />
         <div className="mt-2 flex items-center justify-end text-sm text-muted">
           {content.length}/{LIMITS.entryContent}

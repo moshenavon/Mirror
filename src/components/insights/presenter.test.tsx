@@ -153,7 +153,7 @@ describe("Presenter", () => {
     expect(screen.getByRole("heading", { name: "משה נבון" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "הוספת משימה" }));
-    expect(onCreate).toHaveBeenCalledWith("1", "לשמר את הסשן השבועי");
+    expect(onCreate).toHaveBeenCalledWith("1", "לשמר את הסשן השבועי", []);
     expect(await screen.findByText(/המשימה נוספה/)).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: /יצירת Action Item/ })).not.toBeInTheDocument();
   });

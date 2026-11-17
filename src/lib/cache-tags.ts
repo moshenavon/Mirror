@@ -10,4 +10,6 @@ export const cacheTags = {
   team: (teamId: string) => `team:${teamId}`,
   /** A team's report fields. */
   fields: (teamId: string) => `fields:${teamId}`,
+  /** A team's members as offered for "@" tagging (names and avatars). */
+  members: (teamId: string) => `members:${teamId}`,
 };

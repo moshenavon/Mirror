@@ -9,6 +9,7 @@ import { Presenter } from "./presenter";
 import { Emoji } from "@/components/emoji";
 import { createActionItem } from "@/app/actions/action-items";
 import { groupByEntry, isDone, type ActionItem } from "@/lib/action-items";
+import type { Mentionable } from "@/lib/mentions";
 
 type Preset = { id: string; label: string; range: DateRange };
 
@@ -20,8 +21,15 @@ type Props = {
   fields: InsightField[];
   entries: InsightEntry[];
   actionItems?: ActionItem[];
+  /** Team members that can be tagged in new action items. */
+  mentionables?: Mentionable[];
   /** Injected for tests. */
-  onCreateActionItem?: (teamId: string, entryId: string, title: string) => ReturnType<typeof createActionItem>;
+  onCreateActionItem?: (
+    teamId: string,
+    entryId: string,
+    title: string,
+    assignees: string[],
+  ) => ReturnType<typeof createActionItem>;
 };
 
 export function InsightsView({
@@ -32,6 +40,7 @@ export function InsightsView({
   fields,
   entries,
   actionItems = [],
+  mentionables = [],
   onCreateActionItem = createActionItem,
 }: Props) {
   const sections = useMemo(() => buildSections(fields, entries), [fields, entries]);
@@ -153,7 +162,8 @@ export function InsightsView({
           startAt={presenting.startAt}
           onClose={() => setPresenting(null)}
           actionItemsByEntry={actionItemsByEntry}
-          onCreateActionItem={(entryId, title) => onCreateActionItem(teamId, entryId, title)}
+          mentionables={mentionables}
+          onCreateActionItem={(entryId, title, assignees) => onCreateActionItem(teamId, entryId, title, assignees)}
         />
       )}
     </div>

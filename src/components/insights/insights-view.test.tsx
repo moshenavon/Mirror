@@ -72,8 +72,8 @@ describe("InsightsView", () => {
   it("links to the action items with the open count and creates items for the team", async () => {
     const onCreate = vi.fn(async () => ({ ok: true as const }));
     const actionItems = [
-      { id: "a1", title: "פתוחה", entryId: "1", fieldLabel: null, fieldEmoji: null, sourceContent: null, createdAt: "2026-11-03T00:00:00Z", createdByName: null, doneAt: null, doneByName: null, canDelete: true },
-      { id: "a2", title: "סגורה", entryId: "1", fieldLabel: null, fieldEmoji: null, sourceContent: null, createdAt: "2026-11-02T00:00:00Z", createdByName: null, doneAt: "2026-11-04T00:00:00Z", doneByName: null, canDelete: true },
+      { id: "a1", title: "פתוחה", entryId: "1", fieldLabel: null, fieldEmoji: null, sourceContent: null, createdAt: "2026-11-03T00:00:00Z", createdByName: null, doneAt: null, doneByName: null, canDelete: true, assignees: [] },
+      { id: "a2", title: "סגורה", entryId: "1", fieldLabel: null, fieldEmoji: null, sourceContent: null, createdAt: "2026-11-02T00:00:00Z", createdByName: null, doneAt: "2026-11-04T00:00:00Z", doneByName: null, canDelete: true, assignees: [] },
     ];
     const user = userEvent.setup();
     render(<InsightsView {...props} actionItems={actionItems} onCreateActionItem={onCreate} />);
@@ -85,6 +85,6 @@ describe("InsightsView", () => {
     await user.click(screen.getByRole("button", { name: /יצירת Action Item/ }));
     await user.type(screen.getByLabelText("מה הצוות צריך לעשות?"), "לדבר על זה");
     await user.click(screen.getByRole("button", { name: "הוספת משימה" }));
-    expect(onCreate).toHaveBeenCalledWith("t1", "1", "לדבר על זה");
+    expect(onCreate).toHaveBeenCalledWith("t1", "1", "לדבר על זה", []);
   });
 });

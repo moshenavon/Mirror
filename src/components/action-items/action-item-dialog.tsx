@@ -4,7 +4,9 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { LIMITS } from "@/lib/validation";
 import { Emoji } from "@/components/emoji";
-import { buttonClass, inputClass } from "@/components/ui";
+import { MentionTextarea, MentionText } from "@/components/mention-textarea";
+import { buttonClass } from "@/components/ui";
+import { MENTION_HINT_KEYS, findMentions, type Mentionable } from "@/lib/mentions";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -18,11 +20,14 @@ export type ActionItemSource = {
 type Props = {
   source: ActionItemSource;
   onClose: () => void;
-  onSubmit: (title: string) => Promise<Result>;
+  /** `assignees` are the e-mail addresses of the members tagged with "@" in the title. */
+  onSubmit: (title: string, assignees: string[]) => Promise<Result>;
+  /** Team members that can be tagged (= assigned). */
+  mentionables?: Mentionable[];
 };
 
 /** Dialog for turning an insight into a follow-up task for the team. */
-export function ActionItemDialog({ source, onClose, onSubmit }: Props) {
+export function ActionItemDialog({ source, onClose, onSubmit, mentionables = [] }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +49,7 @@ export function ActionItemDialog({ source, onClose, onSubmit }: Props) {
     }
     setError(null);
     startTransition(async () => {
-      const result = await onSubmit(title);
+      const result = await onSubmit(title, findMentions(title, mentionables));
       if (!result.ok) setError(result.error);
     });
   }
@@ -75,25 +80,30 @@ export function ActionItemDialog({ source, onClose, onSubmit }: Props) {
             <Emoji value={source.fieldEmoji} size={24} />
             {source.fieldLabel} · {source.authorName}
           </figcaption>
-          <blockquote className="line-clamp-4 whitespace-pre-wrap text-muted">{source.content}</blockquote>
+          <blockquote className="line-clamp-4 whitespace-pre-wrap text-muted">
+            <MentionText text={source.content} mentionables={mentionables} />
+          </blockquote>
         </figure>
 
         <label htmlFor="action-item-title" className="mb-1 block font-medium">
           מה הצוות צריך לעשות?
         </label>
-        <textarea
+        <MentionTextarea
           id="action-item-title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={setTitle}
+          mentionables={mentionables}
+          hintKey={MENTION_HINT_KEYS.actionItem}
           placeholder="לדוגמה: לקבוע סשן שיתוף ידע על הדיפלוי עד סוף השבוע"
           rows={3}
           maxLength={LIMITS.actionItemTitle}
           autoFocus
-          className={`${inputClass} text-lg leading-relaxed`}
+          className="text-lg leading-relaxed"
         />
         <div className="mt-2 flex items-center justify-end text-sm text-muted">
           {title.length}/{LIMITS.actionItemTitle}
         </div>
+        <AssigneesPreview title={title} mentionables={mentionables} />
 
         <AnimatePresence>
           {error && (
@@ -126,5 +136,18 @@ export function ActionItemDialog({ source, onClose, onSubmit }: Props) {
         </div>
       </motion.form>
     </dialog>
+  );
+}
+
+/** "Assigned to: ..." under the text, so it is clear that a tag assigns the task. */
+function AssigneesPreview({ title, mentionables }: { title: string; mentionables: Mentionable[] }) {
+  const assigned = findMentions(title, mentionables)
+    .map((email) => mentionables.find((m) => m.email === email))
+    .filter((m): m is Mentionable => m !== undefined);
+  if (assigned.length === 0) return null;
+  return (
+    <p className="mt-2 rounded-xl bg-primary-soft px-3 py-2 text-sm" aria-live="polite">
+      <span className="font-semibold">המשימה תשויך ל:</span> {assigned.map((m) => m.name ?? m.email).join(", ")}
+    </p>
   );
 }

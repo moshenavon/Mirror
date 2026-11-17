@@ -40,6 +40,7 @@ export async function addMembers(teamId: string, input: string, role: string = "
   }
 
   for (const email of toAdd) updateTag(cacheTags.teamsOf(email));
+  if (toAdd.length) updateTag(cacheTags.members(teamId));
   refresh();
   return { ok: true, data: { added: toAdd, skipped, invalid } };
 }
@@ -71,6 +72,7 @@ export async function removeMember(memberId: string): Promise<ActionResult> {
   if (!data?.length) return fail(dbErrorMessage({ code: "42501" }));
   updateTag(cacheTags.teamsOf(data[0].email));
   updateTag(cacheTags.team(data[0].team_id));
+  updateTag(cacheTags.members(data[0].team_id));
   refresh();
   return { ok: true };
 }
