@@ -141,6 +141,10 @@ export function ReportBoard({ fields, onSubmit, anonymity = "optional", mentiona
   );
 }
 
+const EMOJI_BIG = 64;
+const EMOJI_SMALL = 36;
+const SHRINK = { duration: 0.25, ease: "easeOut" } as const;
+
 type DialogProps = {
   field: ReportField;
   anonymity: Anonymity;
@@ -152,6 +156,9 @@ type DialogProps = {
 export function EntryDialog({ field, anonymity, mentionables, onClose, onSubmit }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const [content, setContent] = useState("");
+  // Once the sender starts typing, the header shrinks so the tag list, the tip and the
+  // send button stay on screen (especially on phones, with the keyboard open).
+  const [typing, setTyping] = useState(false);
   const [anonymous, setAnonymous] = useState(anonymity === "always");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -192,97 +199,130 @@ export function EntryDialog({ field, anonymity, mentionables, onClose, onSubmit 
         initial={{ opacity: 0, scale: 0.9, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 320, damping: 24 }}
-        className="relative rounded-[2rem] border border-border bg-surface p-6 shadow-2xl sm:p-8"
+        className="relative flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-[2rem] border border-border bg-surface shadow-2xl"
       >
-        <div className="mb-5 flex items-center gap-3">
-          <motion.span initial={{ rotate: -20, scale: 0.5 }} animate={{ rotate: 0, scale: 1 }} transition={{ delay: 0.1 }}>
-            <Emoji value={field.emoji} size={64} />
-          </motion.span>
-          <h2 id="entry-dialog-title" className="text-2xl font-bold">
-            {field.label}
-          </h2>
-        </div>
-        <label htmlFor="entry-content" className="sr-only">
-          תוכן הדיווח
-        </label>
-        <MentionTextarea
-          id="entry-content"
-          value={content}
-          onChange={setContent}
-          mentionables={mentionables}
-          hintKey={MENTION_HINT_KEYS.report}
-          placeholder={field.placeholder || "כתבו כאן…"}
-          rows={6}
-          maxLength={LIMITS.entryContent}
-          autoFocus
-          className="text-lg leading-relaxed"
-        />
-        <div className="mt-2 flex items-center justify-end text-sm text-muted">
-          {content.length}/{LIMITS.entryContent}
-        </div>
-
-        {anonymity === "optional" ? (
-          <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-border p-3 transition hover:bg-primary-soft has-[:checked]:border-accent has-[:checked]:bg-primary-soft">
-            <input
-              type="checkbox"
-              checked={anonymous}
-              onChange={(e) => setAnonymous(e.target.checked)}
-              className="peer sr-only"
-            />
-            <span
-              aria-hidden
-              className="relative mt-0.5 inline-flex h-6 w-11 shrink-0 rounded-full bg-border transition peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-primary"
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 pb-3 sm:p-8 sm:pb-4">
+          <motion.div
+            initial={false}
+            animate={{ marginBottom: typing ? 8 : 20 }}
+            transition={SHRINK}
+            className="flex items-center gap-3"
+          >
+            {/* The slot shrinks (so it takes less room); the emoji inside scales with it. */}
+            <motion.span
+              initial={false}
+              animate={{ width: typing ? EMOJI_SMALL : EMOJI_BIG, height: typing ? EMOJI_SMALL : EMOJI_BIG }}
+              transition={SHRINK}
+              className="flex shrink-0 items-center justify-center"
             >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${anonymous ? "right-[22px]" : "right-0.5"}`}
-              />
-            </span>
-            <span>
-              <span className="flex items-center gap-1.5 font-semibold">
-                <IncognitoIcon size={20} /> שליחה אנונימית
-              </span>
-              <AnimatePresence initial={false}>
-                {anonymous && (
-                  <motion.span
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="block overflow-hidden text-sm text-muted"
-                  >
-                    הדיווח יישמר בלי שום שיוך אליך – גם לא במסד הנתונים. הוא לא יופיע בהיסטוריה שלך ולא תוכלו לערוך
-                    אותו.
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </span>
+              <motion.span
+                initial={{ rotate: -20, scale: 0.5 }}
+                animate={{ rotate: 0, scale: typing ? EMOJI_SMALL / EMOJI_BIG : 1 }}
+                transition={typing ? SHRINK : { delay: 0.1 }}
+                className="flex shrink-0"
+              >
+                <Emoji value={field.emoji} size={EMOJI_BIG} />
+              </motion.span>
+            </motion.span>
+            <motion.h2
+              id="entry-dialog-title"
+              initial={false}
+              animate={{ fontSize: typing ? "1.125rem" : "1.5rem" }}
+              transition={SHRINK}
+              className="font-bold leading-tight"
+            >
+              {field.label}
+            </motion.h2>
+          </motion.div>
+          <label htmlFor="entry-content" className="sr-only">
+            תוכן הדיווח
           </label>
-        ) : anonymity === "always" ? (
-          <p className="mt-3 flex items-center gap-2 rounded-2xl bg-primary-soft p-3 text-sm">
-            <IncognitoIcon size={20} /> הדיווח יישלח באופן אנונימי לחלוטין.
-          </p>
-        ) : (
-          <p className="mt-3 rounded-2xl bg-primary-soft p-3 text-sm">🪪 הדיווח יישלח בשמך.</p>
-        )}
+          <MentionTextarea
+            id="entry-content"
+            value={content}
+            onChange={(value) => {
+              setContent(value);
+              if (value) setTyping(true);
+            }}
+            mentionables={mentionables}
+            hintKey={MENTION_HINT_KEYS.report}
+            placeholder={field.placeholder || "כתבו כאן…"}
+            rows={3}
+            maxLength={LIMITS.entryContent}
+            autoFocus
+            className="max-h-48 min-h-[5.5rem] text-lg leading-relaxed [field-sizing:content]"
+          />
+          <div className="mt-1 flex items-center justify-end text-sm text-muted">
+            {content.length}/{LIMITS.entryContent}
+          </div>
 
-        <AnimatePresence>
-          {error && (
-            <motion.p
-              role="alert"
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: [12, -8, 6, -4, 0] }}
-              exit={{ opacity: 0 }}
-              className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-danger"
-            >
-              {error}
-            </motion.p>
+          {anonymity === "optional" ? (
+            <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-border p-3 transition hover:bg-primary-soft has-[:checked]:border-accent has-[:checked]:bg-primary-soft">
+              <input
+                type="checkbox"
+                checked={anonymous}
+                onChange={(e) => setAnonymous(e.target.checked)}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden
+                className="relative mt-0.5 inline-flex h-6 w-11 shrink-0 rounded-full bg-border transition peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-primary"
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${anonymous ? "right-[22px]" : "right-0.5"}`}
+                />
+              </span>
+              <span>
+                <span className="flex items-center gap-1.5 font-semibold">
+                  <IncognitoIcon size={20} /> שליחה אנונימית
+                </span>
+                <AnimatePresence initial={false}>
+                  {anonymous && (
+                    <motion.span
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="block overflow-hidden text-sm text-muted"
+                    >
+                      הדיווח יישמר בלי שום שיוך אליך – גם לא במסד הנתונים. הוא לא יופיע בהיסטוריה שלך ולא תוכלו לערוך
+                      אותו.
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </span>
+            </label>
+          ) : anonymity === "always" ? (
+            <p className="mt-3 flex items-center gap-2 rounded-2xl bg-primary-soft p-3 text-sm">
+              <IncognitoIcon size={20} /> הדיווח יישלח באופן אנונימי לחלוטין.
+            </p>
+          ) : (
+            <p className="mt-3 rounded-2xl bg-primary-soft p-3 text-sm">🪪 הדיווח יישלח בשמך.</p>
           )}
-        </AnimatePresence>
 
-        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                role="alert"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: [12, -8, 6, -4, 0] }}
+                exit={{ opacity: 0 }}
+                className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-danger"
+              >
+                {error}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="flex shrink-0 gap-3 border-t border-border bg-surface px-5 py-3 sm:justify-end sm:px-8 sm:py-4">
           <button type="button" onClick={onClose} disabled={pending} className={buttonClass("secondary", "lg")}>
             ביטול
           </button>
-          <button type="submit" disabled={pending || trimmedLength === 0} className={buttonClass("primary", "lg", "min-w-32")}>
+          <button
+            type="submit"
+            disabled={pending || trimmedLength === 0}
+            className={buttonClass("primary", "lg", "min-w-32 flex-1 sm:flex-none")}
+          >
             {pending ? (
               <span className="inline-flex items-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
