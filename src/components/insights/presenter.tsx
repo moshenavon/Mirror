@@ -475,6 +475,8 @@ function useFitText(boxRef: React.RefObject<HTMLElement | null>, textRef: React.
     const text = textRef.current;
     if (!box || !text) return;
     let available = 0;
+    // Words are never split mid-word: a word wider than the card makes scrollWidth exceed
+    // clientWidth, so the font simply shrinks until the longest word fits on one line.
     const fits = () => text.offsetHeight <= available && text.scrollWidth <= text.clientWidth + 1;
     const fit = () => {
       if (!box.clientHeight || !box.clientWidth) return; // not laid out (e.g. tests): keep the CSS size
@@ -483,6 +485,7 @@ function useFitText(boxRef: React.RefObject<HTMLElement | null>, textRef: React.
       available = box.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - 4;
       let lo = MIN_CONTENT_PX;
       let hi = MAX_CONTENT_PX;
+      text.style.overflowWrap = "normal";
       text.style.fontSize = `${hi}px`;
       if (fits()) return;
       while (hi - lo > 0.5) {
@@ -492,6 +495,9 @@ function useFitText(boxRef: React.RefObject<HTMLElement | null>, textRef: React.
         else hi = mid;
       }
       text.style.fontSize = `${Math.floor(lo)}px`;
+      // Only a "word" that cannot fit even at the smallest size (a very long URL, say)
+      // may still be broken, so it does not overflow the card.
+      if (!fits()) text.style.overflowWrap = "anywhere";
     };
     fit();
     if (typeof ResizeObserver === "undefined") return;
@@ -555,7 +561,7 @@ function SlideView({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.18 }}
-          className="relative w-full whitespace-pre-wrap break-words rounded-[2rem] border border-border bg-surface px-[1em] py-[0.7em] text-2xl leading-snug shadow-sm sm:text-3xl"
+          className="relative w-full whitespace-pre-wrap rounded-[2rem] border border-border bg-surface px-[1em] py-[0.7em] text-2xl leading-snug shadow-sm sm:text-3xl"
         >
           <span aria-hidden className="absolute -top-6 right-6 text-6xl leading-none text-accent">
             ”
