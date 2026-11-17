@@ -40,6 +40,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  // Android Chrome: the on-screen keyboard shrinks the page itself, so centred dialogs stay above it.
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#7cc8ff" },
     { media: "(prefers-color-scheme: dark)", color: "#07122e" },

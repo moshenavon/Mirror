@@ -8,6 +8,7 @@ import { Emoji } from "./emoji";
 import { buttonClass } from "./ui";
 import { IncognitoIcon } from "./incognito-icon";
 import { MentionTextarea } from "./mention-textarea";
+import { useKeyboardDialogStyle } from "@/lib/keyboard";
 import { MENTION_HINT_KEYS, type Mentionable } from "@/lib/mentions";
 
 export type ReportField = {
@@ -151,6 +152,7 @@ type DialogProps = {
 
 export function EntryDialog({ field, anonymity, mentionables, onClose, onSubmit }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const keyboardStyle = useKeyboardDialogStyle();
   const [content, setContent] = useState("");
   const [anonymous, setAnonymous] = useState(anonymity === "always");
   const [error, setError] = useState<string | null>(null);
@@ -185,8 +187,9 @@ export function EntryDialog({ field, anonymity, mentionables, onClose, onSubmit 
         e.preventDefault();
         if (!pending) onClose();
       }}
-      // Pinned to the top on phones: a centred dialog ends up behind the on-screen keyboard.
-      className="mx-auto mb-auto mt-3 w-[min(40rem,calc(100%-2rem))] overflow-visible bg-transparent p-0 text-foreground sm:my-auto"
+      // Centred in the space the on-screen keyboard leaves free (see useKeyboardDialogStyle).
+      style={keyboardStyle}
+      className="m-auto w-[min(40rem,calc(100%-2rem))] overflow-visible bg-transparent p-0 text-foreground transition-[top,bottom] duration-200 motion-reduce:transition-none"
     >
       <motion.form
         onSubmit={handleSubmit}
