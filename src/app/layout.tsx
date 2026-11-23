@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { UserMenu } from "@/components/user-menu";
 import { Logo } from "@/components/logo";
 import { MotionProvider } from "@/components/motion-provider";
+import { SplashScreen } from "@/components/splash-screen";
 import { ThemeSync } from "@/components/theme-sync";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { ThemeColorGuard } from "@/components/theme-color-guard";
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col font-sans">
+        <SplashScreen />
         <ThemeSync />
         <ThemeColorGuard />
         <header className="sticky top-0 z-20 border-b border-border bg-surface/90 backdrop-blur">
